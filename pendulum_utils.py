@@ -1,78 +1,47 @@
 '''
-This file is an adaptation of Armand Jordana's pendulum example
-The original code can be found here : https://github.com/ajordana/value_function/blob/main/value_iteration/pendulum.py
+This file is an adaptation of Crocoddyl's cartpole tutorial
+The original code can be found here : https://github.com/loco-3d/crocoddyl/blob/devel/examples/notebooks
 '''
 
+from math import cos, sin
+
 import numpy as np
-from matplotlib import colormaps
-import matplotlib.pyplot as plt
-import os
-import cv2
-import imageio
+from matplotlib import animation
+from matplotlib import pyplot as plt
 
 
-folder = "plot/pendulum/value_images/"
+def animatePendulum(xs, sleep=50, show=False):
+    print("processing the animation ... ")
+    cart_size = 0.1
+    pole_length = 5.0
+    fig = plt.figure()
+    ax = plt.axes(xlim=(-8, 8), ylim=(-6, 6))
+    patch = plt.Rectangle((0.0, 0.0), cart_size, cart_size, fc="b")
+    (line,) = ax.plot([], [], "k-", lw=2)
+    time_text = ax.text(0.02, 0.95, "", transform=ax.transAxes)
 
-file_list = os.listdir(folder)
-im_list = [arr for arr in os.listdir(folder) if arr.endswith(".npy")]
-nb_im = len(im_list)
+    def init():
+        ax.add_patch(patch)
+        line.set_data([], [])
+        time_text.set_text("")
+        return patch, line, time_text
 
+    def animate(i):
+        x_cart = 0.0 #xs[i][0]
+        y_cart = 0.0
+        theta = xs[i][1]
+        patch.set_xy([x_cart - cart_size / 2, y_cart - cart_size / 2])
+        x_pole = np.cumsum([x_cart, -pole_length * sin(theta)])
+        y_pole = np.cumsum([y_cart, pole_length * cos(theta)])
+        line.set_data(x_pole, y_pole)
+        time = i * sleep / 1000.0
+        time_text.set_text(f"time = {time:.1f} sec")
+        return patch, line, time_text
 
-value_list = []
-
-for i in range(nb_im):
-    im = np.load(folder + str(i) + ".npy")
-    value_list.append(im)
-
-
-sample_lb = np.array([-np.pi, - 6.])
-sample_ub = np.array([np.pi, 6.])
-N = value_list[0].shape[0]
-x = np.linspace(sample_lb[0], sample_ub[0], N)
-y = np.linspace(sample_lb[1], sample_ub[1], N)
-X, Y = np.meshgrid(x, y)
-
-
-
-cmap = colormaps['viridis']
-
-
-
-
-vmin = np.min(np.array(value_list))
-vmax = np.max(np.array(value_list))
-
-color_levels = np.linspace(start=vmin, stop=vmax, num=1000)
-
-
-for i in range(nb_im):
-    fig, axs = plt.subplots(1, 1, figsize=(10, 10))
-    cs1 = axs.contourf(X, Y, value_list[i],   cmap=cmap, levels=color_levels)
-    axs.set_xlabel("$\\theta$", fontsize=18)
-    axs.set_ylabel("$\\dot\\theta$", fontsize=18)
-    fig.colorbar(cs1)
-    plt.savefig(folder +  str(i) + ".png")
-    plt.close()
-
-
-
-video_name = 'plot/pendulum/video.mp4'
-
-images = [folder + str(i) + ".png" for i in range(nb_im)]
-
-frame = cv2.imread(images[0])
-height, width, layers = frame.shape
-
-
-
-writer = imageio.get_writer(video_name, format='ffmpeg', fps=4)
-print("saving to ")
-print(video_name)
-print(writer)
-for img_path in images:
-    img = imageio.v3.imread(img_path)[:, :, :3]
-    writer.append_data(img)
-
-writer.close()
-print("Closed writer")
-        
+    anim = animation.FuncAnimation(
+        fig, animate, init_func=init, frames=len(xs), interval=sleep, blit=True
+    )
+    print("... processing done")
+    if show:
+        plt.show()
+    return anim

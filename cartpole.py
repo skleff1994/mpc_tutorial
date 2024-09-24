@@ -68,23 +68,23 @@ class DifferentialActionModelCartpole(crocoddyl.DifferentialActionModelAbstract)
         data.r = np.matrix(self.costWeights * np.array([s, 1 - c, y, ydot, thdot, f])).T
         data.cost = 0.5 * sum(np.asarray(data.r) ** 2).item()
 
-    def calcDiff(model, data, x, u=None):
+    def calcDiff(self, data, x, u=None):
         '''
         Analytical derivatives of the cartpole dynamics and cost
         '''
         if u is None:
-            u = model.unone
+            u = self.unone
 
         # Getting the state and control variables
         y, th, ydot, thdot = x[0].item(), x[1].item(), x[2].item(), x[3].item()
         f = u[0].item()
 
         # Shortname for system parameters
-        m1, m2, lcart, g = model.m1, model.m2, model.l, model.g
+        m1, m2, lcart, g = self.m1, self.m2, self.l, self.g
         s, c = np.sin(th), np.cos(th)
         m = m1 + m2
         mu = m1 + m2 * s**2
-        w = model.costWeights
+        w = self.costWeights
 
         # derivative of xddot by x, theta, xdot, thetadot
         # derivative of thddot by x, theta, xdot, thetadot
