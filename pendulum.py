@@ -138,7 +138,6 @@ if __name__ == "__main__":
     x0[1] = -3
 
     # Create the running models
-    runningModels = []
     dt = 2e-2
     T = 200
     running_DAM = DiffActionModelPendulum(isTerminal=False, hasConstraints=True)
