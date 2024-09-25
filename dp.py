@@ -13,14 +13,11 @@ def pendulum_dynamics(th, thd, u):
     th_next = th + thd_next*DT
     return th_next, thd_next
 
-COST_WEIGHTS = [1, 1, 1e-2, 1e-3]
 def running_cost(th, thd, u):
-    return 10. * th**2 + 0.1 * thd**2 + 0.001 * u**2
-    # cost = COST_WEIGHTS[0] * (1 - np.cos(th))  # cos(th)
-    # cost += COST_WEIGHTS[1] * (np.sin(thd))    # sin(th)
-    # cost += COST_WEIGHTS[2] * thd ** 2         # thdot
-    # cost += COST_WEIGHTS[3] * u ** 2           # u
-    # return 0.5*cost
+    return 1. * np.sin(th)**2 + 1. *(1-np.cos(th)) **2 + 0.1 * thd**2 + 0.001 * u**2
+
+def terminal_cost(th, thd):
+    return 1. * np.sin(th)**2 + 1. *(1-np.cos(th)) **2 + 0.1 * thd**2 
 
 def find_nearest_index(value, array):
     idx = (np.abs(array - value)).argmin()
@@ -34,10 +31,16 @@ X2_SPACE = np.linspace(X2_MIN, X2_MAX, NX2)
 NU  = 51 ; U_MIN = -20 ; U_MAX = 20
 U_SPACE  = np.linspace(U_MIN, U_MAX, NU)
 MAXITER = 100
-i_target = find_nearest_index(0., X1_SPACE)
-j_target = find_nearest_index(0., X2_SPACE)
+# i_target = find_nearest_index(0., X1_SPACE)
+# j_target = find_nearest_index(0., X2_SPACE)
+# cost_to_go = np.full((NX1, NX2), 1e12)
+# cost_to_go[i_target, j_target] = 0  # Goal state: upright position
+# cost_to_go = np.zeros((NX1, NX2))
 cost_to_go = np.full((NX1, NX2), 1e12)
-cost_to_go[i_target, j_target] = 0  # Goal state: upright position
+# Set final state costs (e.g., zero if you reach the goal)
+for i,x1 in enumerate(X1_SPACE):
+    for j,x2 in enumerate(X2_SPACE):
+        cost_to_go[i, j] = terminal_cost(x1, x2)
 for iter in range(MAXITER):
     print("iter ", iter)
     new_cost_to_go = np.copy(cost_to_go)
@@ -76,38 +79,40 @@ plt.ylabel('Theta dot')
 plt.title('Value function for Simple Pendulum')
 # plt.show()
 
+COMPUTE_POLICY = True
 
-# Initialize policy array (same shape as value function)
-optimal_policy = np.zeros((NX1, NX2))
-# Function to retrieve optimal policy
-print("Computing optimal policy")
-for i, x1 in enumerate(X1_SPACE):
-    for j, x2 in enumerate(X2_SPACE):
-        min_cost = np.inf
-        best_u = 0
-        for u in U_SPACE:
-            # Compute next state based on dynamics
-            x1_next, x2_next = pendulum_dynamics(x1, x2, u)
-            # Find nearest indices in the discretized state space
-            i_next = find_nearest_index(x1_next, X1_SPACE)
-            j_next = find_nearest_index(x2_next, X2_SPACE)
-            # Compute cost based on Bellman equation
-            cost = running_cost(x1, x2, u) + cost_to_go[i_next, j_next]
-            # Update the optimal control input if we find a lower cost
-            if cost < min_cost:
-                min_cost = cost
-                best_u = u
-        # Store the best control input at state (theta, omega)
-        optimal_policy[i, j] = best_u
+if(COMPUTE_POLICY):
+    # Initialize policy array (same shape as value function)
+    optimal_policy = np.zeros((NX1, NX2))
+    # Function to retrieve optimal policy
+    print("Computing optimal policy")
+    for i, x1 in enumerate(X1_SPACE):
+        for j, x2 in enumerate(X2_SPACE):
+            min_cost = np.inf
+            best_u = 0
+            for u in U_SPACE:
+                # Compute next state based on dynamics
+                x1_next, x2_next = pendulum_dynamics(x1, x2, u)
+                # Find nearest indices in the discretized state space
+                i_next = find_nearest_index(x1_next, X1_SPACE)
+                j_next = find_nearest_index(x2_next, X2_SPACE)
+                # Compute cost based on Bellman equation
+                cost = running_cost(x1, x2, u) + cost_to_go[i_next, j_next]
+                # Update the optimal control input if we find a lower cost
+                if cost < min_cost:
+                    min_cost = cost
+                    best_u = u
+            # Store the best control input at state (x1, x2)
+            optimal_policy[i, j] = best_u
 
-# Plot the optimal feedback policy
-plt.figure()
-plt.imshow(optimal_policy, origin='lower', extent=[X1_MIN, X1_MAX, X2_MIN, X2_MAX], aspect='auto')
-plt.colorbar(label='Optimal Control Input u(th, thd)')
-plt.xlabel('Theta (rad)')
-plt.ylabel('Theta dot (rad/s)')
-plt.title('Optimal Feedback Policy from DP')
-# plt.show()
+    # Plot the optimal feedback policy
+    plt.figure()
+    plt.imshow(optimal_policy, origin='lower', extent=[X1_MIN, X1_MAX, X2_MIN, X2_MAX], aspect='auto')
+    plt.colorbar(label='Optimal Control Input u(th, thd)')
+    plt.xlabel('Theta (rad)')
+    plt.ylabel('Theta dot (rad/s)')
+    plt.title('Optimal Feedback Policy from DP')
+    plt.show()
 
 x = np.array([1.,0])
 TSIM = 100
@@ -116,27 +121,36 @@ u_traj = np.zeros(TSIM)
 x_traj[0,:] = x
 print("Simulating optimal policy")
 for t in range(TSIM):
-    ix = find_nearest_index(x[0], X1_SPACE)
-    jx = find_nearest_index(x[1], X2_SPACE)
-    print("Measured ", x)
-    # min_cost = np.inf
-    # for u in U_SPACE:
-    #     # Compute next state based on dynamics
-    #     x1_next, x2_next = pendulum_dynamics(x1, x2, u)
-    #     # Find nearest indices in the discretized state space
-    #     i_next = find_nearest_index(x1_next, X1_SPACE)
-    #     j_next = find_nearest_index(x2_next, X2_SPACE)
-    #     # Compute cost based on Bellman equation
-    #     cost = running_cost(x1, x2, u) + cost_to_go[i_next, j_next]
-    #     # Update the optimal control input if we find a lower cost
-    #     if cost < min_cost:
-    #         min_cost = cost
-    #         best_u = u
-    u = optimal_policy[ix, jx]
+    print("State ", x)
+    # Compute optimal control (online)
+    if(COMPUTE_POLICY):
+        ix = find_nearest_index(x[0], X1_SPACE)
+        jx = find_nearest_index(x[1], X2_SPACE)
+        u = optimal_policy[ix, jx]
+        print("offline ctrl = ", u)
+    else:
+        min_cost = np.inf
+        for u in U_SPACE:
+            # Compute next state based on dynamics
+            x1_next, x2_next = pendulum_dynamics(x[0], x[1], u)
+            # Find nearest indices in the discretized state space
+            i_next = find_nearest_index(x1_next, X1_SPACE)
+            j_next = find_nearest_index(x2_next, X2_SPACE)
+            # Compute cost based on Bellman equation
+            cost = running_cost(x[0], x[1], u) + cost_to_go[i_next, j_next]
+            # Update the optimal control input if we find a lower cost
+            if cost < min_cost:
+                min_cost = cost
+                best_u = u
+        u = best_u.copy()
+        print("online ctrl = ", u)
+
+    # record control + simulate + record state
     u_traj[t] = u.copy()
-    print("Input", u)
     x = pendulum_dynamics(x[0], x[1], u)
     x_traj[t+1,:] = x
+
+# plot trajs
 tlin = np.linspace(0, DT*TSIM, TSIM+1)
 plt.figure('Phase plot')
 plt.plot(x_traj[:,0], x_traj[:,1])
