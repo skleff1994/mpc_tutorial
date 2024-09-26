@@ -24,6 +24,7 @@ def find_nearest_index(value, array):
     idx = (np.abs(array - value)).argmin()
     return idx
 
+# Construct the KKT 
 # Discretrize state space and control space
 NX1 = 101 ; X1_MIN = -np.pi ; X1_MAX = np.pi
 X1_SPACE = np.linspace(X1_MIN, X1_MAX, NX1)
