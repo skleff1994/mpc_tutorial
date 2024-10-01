@@ -139,17 +139,17 @@ if __name__ == "__main__":
 
     # Create the running models
     dt = 2e-2
-    T = 200
-    running_DAM = DiffActionModelPendulum(isTerminal=False, hasConstraints=True)
+    T = 100
+    running_DAM = DiffActionModelPendulum(isTerminal=False, hasConstraints=False)
     running_model = crocoddyl.IntegratedActionModelEuler(running_DAM, dt)
 
-    running_DAM_terminal = DiffActionModelPendulum(isTerminal=True, hasConstraints=True)
+    running_DAM_terminal = DiffActionModelPendulum(isTerminal=True, hasConstraints=False)
     running_model_terminal = crocoddyl.IntegratedActionModelEuler(running_DAM_terminal, dt)
 
     # Create the shooting problem
     problem = crocoddyl.ShootingProblem(x0, [running_model] * T, running_model_terminal)
 
-
+    
     # # # # # # # # # # # # #
     ###     SOLVE OCP     ###
     # # # # # # # # # # # # #
@@ -174,62 +174,53 @@ if __name__ == "__main__":
     x_traj = np.array(solver.xs)
     u_traj = np.array(solver.us)
     
-    # Create animation
-    anim = animatePendulum(solver.xs)
+    # # Create animation
+    # anim = animatePendulum(solver.xs)
 
-    # HTML(anim.to_jshtml())
-    HTML(anim.to_html5_video())
+    # # HTML(anim.to_jshtml())
+    # HTML(anim.to_html5_video())
 
     import matplotlib.pyplot as plt 
 
     time_lin = np.linspace(0, dt * (T + 1), T+1)
 
-    fig, axs = plt.subplots(nx)
-    for i in range(nx):
-        axs[i].plot(time_lin, x_traj[:, i])
-        axs[i].grid()
-    fig.suptitle("State trajectory")
+    # fig, axs = plt.subplots(nx)
+    # for i in range(nx):
+    #     axs[i].plot(time_lin, x_traj[:, i])
+    #     axs[i].grid()
+    # fig.suptitle("State trajectory")
 
-    plt.figure()
-    plt.plot(time_lin[:-1], u_traj[:])
-    plt.title("Control trajectory")
-    plt.grid()
+    # plt.figure()
+    # plt.plot(time_lin[:-1], u_traj[:])
+    # plt.title("Control trajectory")
+    # plt.grid()
 
-    # plt.show()
+    # plt.figure()
+    # plt.plot(x_traj[:, 0],  x_traj[:, 1], label='Pendulum')
+    # plt.plot(x_traj[0,0], x_traj[0,1], 'ro')
+    # plt.plot(0, 0, 'ro')
+    # # plt.plot(3 * np.pi, 0, 'ro')
 
-    # time_lin = np.linspace(0, dt * (T + 1), T+1)
-    # fig, axs = plt.subplots(vLearning.nx + vLearning.nu + 1)
-    # for j in range(N_solver):
-    #     for i in range(vLearning.nx):
-    #         axs[i].plot(time_lin, x_trajs[j, :, i], label=solver_name[j])
-            
-    #     axs[2].plot(time_lin[:-1], u_trajs[j, :], label=solver_name[j])
-    #     axs[3].plot(time_lin[:-1], np.cumsum(cost_trajs[j, :]), label=solver_name[j])
-    # axs[0].grid()
-    # axs[1].grid()
-    # axs[2].grid()
-    # axs[3].grid()
-    # axs[0].legend()
-    # axs[2].set_xlabel("Time [s]", fontsize=18)
-    # axs[0].set_ylabel("$\\theta$", fontsize=18)
-    # axs[1].set_ylabel("$\\dot\\theta$", fontsize=18)
-    # axs[2].set_ylabel("$\\tau$", fontsize=18)
-    # axs[3].set_ylabel("Cost", fontsize=18)
-    # plt.savefig(folder + "trajectory.png", bbox_inches='tight')
+    # plt.legend()
+    # plt.title("phase portrait")   
+    # plt.xlabel("$\\theta$", fontsize=18)
+    # plt.ylabel("$\\dot\\theta$", fontsize=18)
+    # plt.grid()
 
-    plt.figure()
-    plt.plot(x_traj[:, 0],  x_traj[:, 1], label='Pendulum')
-    plt.plot(x_traj[0,0], x_traj[0,1], 'ro')
-    plt.plot(0, 0, 'ro')
-    # plt.plot(3 * np.pi, 0, 'ro')
+    # fancy plot with discretization
+    fig, (ax1, ax2) = plt.subplots(2,1, sharex='col')
+    time_discrete = range(T+1)
+    ax1.plot(time_discrete,  x_traj[:, 0], linewidth=1, color='r', marker='.', label='Pendulum position $\\theta$ ($x_1$)')
+    ax1.plot(time_discrete,  x_traj[:, 1], linewidth=1, color='g', marker='.', label='Pendulum velocity $\\omega$ ($x_2$)')
+    ax1.grid()
+    ax1.legend(fontsize=20)
 
-    plt.legend()
-    plt.title("phase portrait")   
-    plt.xlabel("$\\theta$", fontsize=18)
-    plt.ylabel("$\\dot\\theta$", fontsize=18)
-
-    plt.grid()
-
+    ax2.step(time_discrete[:-1],  u_traj, where='post', linestyle=None, color='b', label='Control input (u)')
+    ax2.set_xlabel("k", fontsize=20)
+    # plt.ylabel("$\\dot\\theta$", fontsize=18)
+    ax2.grid()
+    ax2.legend(fontsize=20)
+    ax2.locator_params(axis='x', nbins=20) 
     # utils.plot_pendulum_value(X, Y, cmap, z_pred, "Unscaled learned value", folder, None, solver_name)
 
     plt.show()
