@@ -18,7 +18,8 @@ def running_cost(th, thd, u):
     return 0.001 * u**2
 
 def terminal_cost(th, thd):
-    return 1. * np.sin(th)**2 + 1. *(1-np.cos(th)) **2 + 0.1 * thd**2 
+    # return 1. * np.sin(th)**2 + 1. *(1-np.cos(th)) **2 + 0.1 * thd**2 
+    return np.linalg.norm(np.array([th, thd])) 
 
 def find_nearest_index(value, array):
     idx = (np.abs(array - value)).argmin()
