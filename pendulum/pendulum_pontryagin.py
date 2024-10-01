@@ -60,6 +60,16 @@ lambda2_sol = sol.y[3]
 # Compute the control input from the solution
 u_sol = -lambda2_sol / (R * L)
 
+
+from IPython.display import HTML
+from pendulum_utils import animatePendulum
+# Create animation
+x_sol = np.array([theta_sol, omega_sol])
+anim = animatePendulum(x_sol.T)
+# HTML(anim.to_jshtml())
+HTML(anim.to_html5_video())
+
+
 # Plot results
 plt.figure()
 plt.subplot(3,1,1)
@@ -68,14 +78,27 @@ plt.ylabel('Theta (rad)')
 plt.grid()
 
 plt.subplot(3,1,2)
-plt.plot(np.linspace(0, T, len(omega_sol)), omega_sol, label='Omega (rad/s)')
-plt.ylabel('Omega (rad/s)')
+plt.plot(np.linspace(0, T, len(omega_sol)), omega_sol, label='d(Theta)/dt (rad/s)')
+plt.ylabel('d(Theta)/dt (rad/s)')
 plt.grid()
 
 plt.subplot(3,1,3)
 plt.plot(np.linspace(0, T, len(u_sol)), u_sol, label='Control input u')
 plt.ylabel('Control Input u')
 plt.xlabel('Time (s)')
+plt.grid()
+
+
+plt.figure()
+plt.plot(theta_sol,  omega_sol, label='Pendulum')
+plt.plot(theta_sol[0], [0], 'ro')
+plt.plot(0, 0, 'ro')
+# plt.plot(3 * np.pi, 0, 'ro')
+plt.legend()
+plt.title("phase portrait")   
+plt.xlabel("$\\theta$", fontsize=18)
+plt.ylabel("$\\dot\\theta$", fontsize=18)
+
 plt.grid()
 
 plt.tight_layout()

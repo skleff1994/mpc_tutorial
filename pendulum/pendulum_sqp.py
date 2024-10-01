@@ -219,8 +219,8 @@ if __name__ == "__main__":
 
     plt.figure()
     plt.plot(x_traj[:, 0],  x_traj[:, 1], label='Pendulum')
-    plt.plot(np.pi, 0, 'ro')
-    plt.plot(-np.pi, 0, 'ro')
+    plt.plot(x_traj[0,0], x_traj[0,1], 'ro')
+    plt.plot(0, 0, 'ro')
     # plt.plot(3 * np.pi, 0, 'ro')
 
     plt.legend()
