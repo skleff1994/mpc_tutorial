@@ -7,16 +7,16 @@ m2 = 0.1  # mass of the pole
 l = 0.5   # length of the pole
 g = 9.81  # gravity
 dt = 0.02 # time step for simulation
-N = 10   # number of iterations
+N = 100   # number of iterations
 theta_max = np.pi 
 p_max = 1.0
 
 # State discretization
-p_vals = np.linspace(-p_max, p_max, 21)
-theta_vals = np.linspace(-theta_max, theta_max, 21)
-p_dot_vals = np.linspace(-1, 1, 21)
-theta_dot_vals = np.linspace(-1, 1, 21)
-f_vals = np.linspace(-5, 5, 21)
+p_vals = np.linspace(-p_max, p_max, 11)
+theta_vals = np.linspace(-theta_max, theta_max, 11)
+p_dot_vals = np.linspace(-1, 1, 11)
+theta_dot_vals = np.linspace(-1, 1, 11)
+f_vals = np.linspace(-5, 5, 11)
 
 # Value function grid
 V = np.zeros((len(p_vals), len(theta_vals), len(p_dot_vals), len(theta_dot_vals)))
@@ -105,7 +105,7 @@ plt.title('Value Function V(p, theta) with fixed velocities')
 plt.show()
 
 # Simulating optimal policy
-x = np.array([0., 1, 0, 0])  # Initial state
+x = np.array([0., -1, 0, 0])  # Initial state
 TSIM = 1000
 x_traj = np.zeros((TSIM + 1, 4))
 u_traj = np.zeros(TSIM)

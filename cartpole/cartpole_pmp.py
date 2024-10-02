@@ -18,7 +18,7 @@ class DifferentialActionModelCartpole(crocoddyl.DifferentialActionModelAbstract)
         self.m2 = 0.1
         self.l = 0.5
         self.g = 9.81
-        self.R = 0.000001 # control REG
+        self.R = 0.001 # control REG
 
         self.costWeights = [
             0.1,   # sin(th)
@@ -119,7 +119,8 @@ class DifferentialActionModelCartpole(crocoddyl.DifferentialActionModelAbstract)
         # second derivative of data.cost by f
         data.Luu[:] = np.array([w[5] ** 2])
 
-model = crocoddyl.IntegratedActionModelEuler(DifferentialActionModelCartpole(isTerminal=False), 1e-3)
+model = DifferentialActionModelCartpole(isTerminal=False)
+# model = crocoddyl.IntegratedActionModelEuler(DifferentialActionModelCartpole(isTerminal=False), 1e-3)
 data  = model.createData()
 
 # Dynamics: [x, theta, x_dot, theta_dot, lambda1, lambda2, lambda3, lambda4]
@@ -133,31 +134,35 @@ def dynamics(t, y):
         # Co-state
         lb = np.array([l1, l2, l3, l4])
         # Clamp theta to avoid numerical issues
-        th = np.clip(th, 0, 2*np.pi)
+        # th = np.clip(th, 0, 2*np.pi)
         # Optimal control 
-        mu = model.differential.m1 + model.differential.m2 * np.sin(th)**2
-        Fu = np.array([0.,0.,1./mu,np.cos(th)/(model.differential.l*mu)])
-        u =  np.array([-lb.T @ Fu/ model.differential.R])  # Optimal control law
+        mu = model.m1 + model.m2 * np.sin(th)**2
+        Fu = np.array([0.,0.,1./mu,np.cos(th)/(model.l*mu)])
+        u =  np.array([-lb.T @ Fu/ model.R])  # Optimal control law
         # State equations
         model.calc(data, x, u)
+        xdot[:,i] = np.array([x[2], x[3], data.xout[0], data.xout[1]])
         model.calcDiff(data, x, u)
-        xdot[:,i] = data.xnext
         # Co-state equations
-        lbdot[:,i] = -(data.Lx + lb.T @ data.Fx)
+        Fx = np.zeros((4,4))
+        Fx[0,0] = 1 ; Fx[1,1] = 1
+        Fx[2:,:] = data.Fx
+        lbdot[:,i] = -(data.Lx + lb.T @ Fx)
+        # print(u)
     return np.vstack([xdot, lbdot])
 
 # Boundary conditions
 def boundary_conditions(ya, yb):
     # Initial state: [x0, x_dot0, theta0, theta_dot0]
     x_a, theta_a, x_dot_a, theta_dot_a, lambda1_a, lambda2_a, lambda3_a, lambda4_a = ya
-    print("theta init = ", theta_a)
+    # print("theta init = ", theta_a)
     # Final state: [xf, x_dotf, thetaf, theta_dotf]
     x_b, theta_b, x_dot_b, theta_dot_b, lambda1_b, lambda2_b, lambda3_b, lambda4_b = yb
-    print("theta final = ", theta_b)
+    # print("theta final = ", theta_b)
     
     # Initial conditions
     bc1 = x_a                  # Start at x=0
-    bc2 = theta_a -np.pi       # Start with theta = np.pi/2
+    bc2 = theta_a - 3       # Start with theta = np.pi/2
     bc3 = x_dot_a              # Start with zero velocity
     bc4 = theta_dot_a          # Start with zero angular velocity
     
@@ -171,14 +176,14 @@ def boundary_conditions(ya, yb):
 
 # Initial guess for the solution (linear interpolation for states and co-states)
 N = 100
-T = 2.
+T = 10.
 t = np.linspace(0, T, N)
 y0 = np.zeros((8, N))
 y0[0] = np.linspace(0, 0, N)        # x
-y0[1] = np.linspace(np.pi, 0, N)  # theta
+y0[1] = np.linspace(3, 0, N)  # theta
 y0[2] = np.linspace(0, 0, N)        # x_dot
 y0[3] = np.linspace(0, 0, N)        # theta_dot
-sol = solve_bvp(dynamics, boundary_conditions, t, y0)
+sol = solve_bvp(dynamics, boundary_conditions, t, y0, verbose=True)
 
 # Check if the solution was successful
 if sol.success:
@@ -197,9 +202,9 @@ if sol.success:
     for i in range(N):
         th = theta_sol[i]
         lb = np.array([lambda1_sol[i], lambda2_sol[i], lambda3_sol[i], lambda4_sol[i]])
-        mu = model.differential.m1 + model.differential.m2 * np.sin(th)**2
-        Fu = np.array([0.,0.,1./mu,np.cos(th)/(model.differential.l*mu)])
-        u_sol[i] =  -lb.T @ Fu / model.differential.R  # Optimal control law
+        mu = model.m1 + model.m2 * np.sin(th)**2
+        Fu = np.array([0.,0.,1./mu,np.cos(th)/(model.l*mu)])
+        u_sol[i] =  -lb.T @ Fu / model.R  # Optimal control law
         # u_sol = -lambda4_sol / R
 
     # Create animation
