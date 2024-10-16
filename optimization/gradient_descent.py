@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import pylab
 
 A = 1
-B = 100
-NEWTON = False
+B = 10
+NEWTON = True
 
 def rosenbrock(x):
     """Compute the Rosenbrock function."""
@@ -94,7 +94,7 @@ while iter < MAXIT-1 and grad_norm > TOL:
             # assert alpha == line_search(z_iterates[iter,:], dz, alpha0=0.01)
         else:
             dz = newton_step(z_iterates[iter,:])
-            alpha = backtracking_line_search(rosenbrock, rosenbrock_grad, z, dz, alpha=1, beta=0.5)
+            alpha = backtracking_line_search(rosenbrock, rosenbrock_grad, z, dz, alpha=1, beta=0.9)
             # assert alpha == line_search(z_iterates[iter,:], dz, alpha0=1)
         dz_iterates[iter,:] = dz
         print("alpha = ", alpha)
@@ -109,8 +109,8 @@ print("Local minimizer = ", z)
 
 
 # Visualization
-z1 = np.arange(-1., 2, 0.01)
-z2 = np.arange(-1., 2, 0.01)
+z1 = np.arange(-1.5, 1.5, 0.01)
+z2 = np.arange(-1, 1.5, 0.01)
 Z1, Z2 = pylab.meshgrid(z1, z2)
 Z = F(Z1, Z2)
 
@@ -130,8 +130,8 @@ pylab.xlabel('z1')
 pylab.ylabel('z2')
 pylab.title('Gradient Descent Iterates with Level Sets')
 pylab.legend()
-pylab.xlim(-1, 2.)
-pylab.ylim(-1, 2.)
+pylab.xlim(-1.5, 1.5)
+pylab.ylim(-1, 1.5)
 pylab.grid()
 pylab.show()
 
