@@ -87,12 +87,13 @@ G = constraint_function(np.array([X, Y]))
 # Plotting
 plt.figure(figsize=(10, 8))
 plt.contour(X, Y, Z, levels=30, cmap='viridis', alpha=0.5)
-plt.contour(X, Y, G, levels=[0], colors='red', linewidths=2)
+plt.contour(X, Y, G, levels=[0], colors='black', linewidths=2, label='Constraint')
 iterates = np.array(iterates)
 
 # Plot iterates
-plt.plot(iterates[:, 0], iterates[:, 1], 'o-', color='blue', label='Iterates')
-plt.plot(solution[0], solution[1], 'ro', label='Solution', markersize=10)
+plt.plot(x0[0], x0[1], color='g', marker='o', markersize=12, label='Initial guess')  # green dots
+plt.plot(iterates[:, 0], iterates[:, 1], 'o-', color='red', label='Iterates')
+plt.plot(solution[0], solution[1], 'bo', label='Solution', markersize=10)
 
 plt.title('Newton Method with Line Search for Nonlinear Equality Constrained Optimization')
 plt.xlabel('$x_1$')
