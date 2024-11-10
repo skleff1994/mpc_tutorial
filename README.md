@@ -13,6 +13,7 @@ The repo is still under construction (do not look into `experimental/`). The scr
 - [Crocoddyl](https://github.com/loco-3d/crocoddyl)
 - [mim_solvers](https://github.com/machines-in-motion/mim_solvers/tree/main)
 - matplotlib
+- [mim_robots](https://github.com/machines-in-motion/mim_robots)
 
 # Installation
 It is recommended to use conda. Install miniconda if you do not have it already by following the instructions from the anaconda webpage : https://docs.anaconda.com/miniconda/miniconda-install/
@@ -22,14 +23,22 @@ Then create a conda environment :
 conda create -n mpc_tutorial
 ```
 
-Activate the environment and install mim_solvers and matplotlib
+Activate the environment and install mim_solvers, matplotlib and ipython
 ```
 conda activate mpc_tutorial
 conda install -c conda-forge mim-solvers
 conda install matplotlib
+conda install ipython
 ```
 
 Then run the script of your choice, e.g. the pendulum SQP by running :
 ```
 python pendulum/pendulum_sqp.py
+```
+
+You may also need the `mim_robots` package to run more complex examples (e.g. Kuka). Let's install this package inside your conda environment:
+```
+git clone git@github.com:machines-in-motion/mim_robots.git
+cd mim_robots
+pip install . --no-deps
 ```
