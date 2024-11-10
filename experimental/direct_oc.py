@@ -124,12 +124,12 @@ def optimize_collocation():
 if __name__ == "__main__":
     # Single Shooting
     print("Solving using single shooting")
-    u_guess = np.zeros(N)
+    u_guess = np.ones(N)
     u_opt_single, states_single = optimize_single_shooting(u_guess)
 
     # Multiple Shooting
     print("Solving using multiple shooting")
-    initial_guess = np.zeros(2*N + N)  # State and control guess
+    initial_guess = np.ones(2*N + N)  # State and control guess
     for i in range(N):
         initial_guess[2*i:2*i+2] = x0
     u_opt_multiple, states_multiple = optimize_multiple_shooting(initial_guess)

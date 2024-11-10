@@ -156,10 +156,13 @@ if __name__ == "__main__":
 
     # Define warm start
     xs = [x0] * (T + 1)
-    us = [np.zeros(1)] * T
+    us = [np.ones(1)] * T
 
     # Define solver
-    solver = mim_solvers.SolverCSQP(problem)
+    # solver = mim_solvers.SolverCSQP(problem)
+    # solver = mim_solvers.SolverSQP(problem)
+    # solver = crocoddyl.SolverFDDP(problem)
+    solver = crocoddyl.SolverDDP(problem)
     solver.termination_tolerance = 1e-4
     solver.with_callbacks = True 
     solver.eps_abs = 1e-10
@@ -168,17 +171,18 @@ if __name__ == "__main__":
     # solver.extra_iteration_for_last_kkt = True
     # Solve
     max_iter = 200
-    solver.setCallbacks([mim_solvers.CallbackVerbose()])
-    solver.solve(xs, us, max_iter)
+    # solver.setCallbacks([mim_solvers.CallbackVerbose()])
+    solver.setCallbacks([crocoddyl.CallbackVerbose()])
+    solver.solve(xs, us, max_iter, False)
 
     x_traj = np.array(solver.xs)
     u_traj = np.array(solver.us)
     
-    # # Create animation
-    # anim = animatePendulum(solver.xs)
+    # Create animation
+    anim = animatePendulum(solver.xs)
 
-    # # HTML(anim.to_jshtml())
-    # HTML(anim.to_html5_video())
+    # HTML(anim.to_jshtml())
+    HTML(anim.to_html5_video())
 
     import matplotlib.pyplot as plt 
 
@@ -195,17 +199,17 @@ if __name__ == "__main__":
     # plt.title("Control trajectory")
     # plt.grid()
 
-    # plt.figure()
-    # plt.plot(x_traj[:, 0],  x_traj[:, 1], label='Pendulum')
-    # plt.plot(x_traj[0,0], x_traj[0,1], 'ro')
-    # plt.plot(0, 0, 'ro')
-    # # plt.plot(3 * np.pi, 0, 'ro')
+    plt.figure()
+    plt.plot(x_traj[:, 0],  x_traj[:, 1], label='Pendulum')
+    plt.plot(x_traj[0,0], x_traj[0,1], 'ro')
+    plt.plot(0, 0, 'ro')
+    # plt.plot(3 * np.pi, 0, 'ro')
 
-    # plt.legend()
-    # plt.title("phase portrait")   
-    # plt.xlabel("$\\theta$", fontsize=18)
-    # plt.ylabel("$\\dot\\theta$", fontsize=18)
-    # plt.grid()
+    plt.legend()
+    plt.title("phase portrait")   
+    plt.xlabel("$\\theta$", fontsize=18)
+    plt.ylabel("$\\dot\\theta$", fontsize=18)
+    plt.grid()
 
     # fancy plot with discretization
     fig, (ax1, ax2) = plt.subplots(2,1, sharex='col')

@@ -30,18 +30,18 @@ class DifferentialActionModelCartpole(crocoddyl.DifferentialActionModelAbstract)
             self.costWeights = [
                 100,   # sin(th)
                 100,   # 1-cos(th)
-                0.001,   # y
-                100, # ydot
-                100, # thdot
-                0,   # f
+                1.,   # y
+                0.1, # ydot
+                0.01, # thdot
+                0.001,   # f
             ]  
         else:
             self.costWeights = [
-                0.1,   # sin(th)
-                0.1,   # 1-cos(th)
-                0.01,   # y
-                0.001, # ydot
-                0.001, # thdot
+                0.,   # sin(th)
+                0.,   # 1-cos(th)
+                0.,   # y
+                0.01, # ydot
+                0.01, # thdot
                 0.001,   # f
             ]  
 
@@ -142,27 +142,51 @@ if __name__ == "__main__":
     x0 = np.array([0.0, 3.14, 0.0, 0.0]).T
     u0 = np.zeros(1)
     T = 100
-    dt = 2e-2
+    dt = 5e-3
 
-    # Create the running models
-    running_DAM = DifferentialActionModelCartpole(isTerminal=False)
-    running_model = crocoddyl.IntegratedActionModelEuler(running_DAM, dt)
+    cartpoleDAM = DifferentialActionModelCartpole(isTerminal=False)
+    # cartpoleData = cartpoleDAM.createData()
+    # x = cartpoleDAM.state.rand()
+    # u = np.zeros(1)
+    # cartpoleDAM.calc(cartpoleData, x, u)
+    cartpoleND = crocoddyl.DifferentialActionModelNumDiff(cartpoleDAM, True)
+    cartpoleIAM = crocoddyl.IntegratedActionModelEuler(cartpoleND, dt)
 
-    terminal_DAM = DifferentialActionModelCartpole(isTerminal=True)
-    terminal_model = crocoddyl.IntegratedActionModelEuler(terminal_DAM, 0.)
+    terminalCartpole = DifferentialActionModelCartpole(isTerminal=True)
+    terminalCartpoleDAM = crocoddyl.DifferentialActionModelNumDiff(terminalCartpole, True)
+    terminalCartpoleIAM = crocoddyl.IntegratedActionModelEuler(terminalCartpoleDAM)
 
-    # OCP
-    problem = crocoddyl.ShootingProblem(x0, [running_model] * T, terminal_model)
+    terminalCartpole.costWeights[0] = 100
+    terminalCartpole.costWeights[1] = 100
+    terminalCartpole.costWeights[2] = 1.0
+    terminalCartpole.costWeights[3] = 0.1
+    terminalCartpole.costWeights[4] = 0.01
+    terminalCartpole.costWeights[5] = 0.0001
+    problem = crocoddyl.ShootingProblem(x0, [cartpoleIAM] * T, terminalCartpoleIAM)
+
+    # # Create the running models
+    # running_DAM = DifferentialActionModelCartpole(isTerminal=False)
+    # running_model = crocoddyl.IntegratedActionModelEuler(running_DAM, dt)
+
+    # terminal_DAM = DifferentialActionModelCartpole(isTerminal=True)
+    # terminal_model = crocoddyl.IntegratedActionModelEuler(terminal_DAM, 0.)
+
+    # # OCP
+    # problem = crocoddyl.ShootingProblem(x0, [running_model] * T, terminal_model)
 
     # Define warm start (feasible)
     # us = [u0] * T
     # xs = problem.rollout(us)
-
-    xs = [x0] * (T + 1)
+    problem.x0 = x0
     us = [np.zeros(1)] * T
+    # xs = problem.rollout(us)
+    xs = [x0] * (T + 1)
     
     # Define solver
-    solver = mim_solvers.SolverCSQP(problem)
+    # solver = mim_solvers.SolverSQP(problem)
+    solver = crocoddyl.SolverFDDP(problem)
+    # solver = crocoddyl.SolverDDP(problem)
+
     solver.termination_tolerance = 1e-4
     solver.with_callbacks = True 
     solver.eps_abs = 1e-10
@@ -171,8 +195,9 @@ if __name__ == "__main__":
     # solver.extra_iteration_for_last_kkt = True
     # Solve
     max_iter = 500
-    solver.setCallbacks([mim_solvers.CallbackVerbose()])
-    solver.solve(xs, us, max_iter, isFeasible=False)
+    # solver.setCallbacks([mim_solvers.CallbackVerbose()])
+    solver.setCallbacks([crocoddyl.CallbackVerbose()])
+    solver.solve(xs, us, max_iter, False) # isFeasible=False)
 
     x_traj = np.array(solver.xs)
     u_traj = np.array(solver.us)

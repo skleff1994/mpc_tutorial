@@ -8,8 +8,8 @@ m_cart = 1.0  # mass of the cart (kg)
 m_pole = 0.1  # mass of the pole (kg)
 L = 0.5       # length of the pole (m)
 g = 9.81      # acceleration due to gravity (m/s^2)
-T = 2.0       # time horizon (s)
-N = 50        # number of time steps
+T = 1.0       # time horizon (s)
+N = 10        # number of time steps
 dt = T / N    # time step size
 
 # Initial and final conditions
@@ -38,16 +38,18 @@ def cost_function(states, controls):
 
 def kkt_single_shooting():
     # Hessian of the Lagrangian (including control cost)
-    H = np.zeros((N * 4 + N, N * 4 + N))  
+    H = np.zeros((N * 4 + N, N * 4 + N))  # size nx*N + nu*N
+    print("hessian shape = ", H.shape)
     for i in range(N):
         H[i * 4 + 2, i * 4 + 2] = 100  # State cost for theta
         H[i * 4 + 3, i * 4 + 3] = 10   # State cost for theta_dot
         H[N * 4 + i, N * 4 + i] = 0.01  # Control cost
-
+    #z = [ (x, xd, th, thd)_0, ]
     # Constraint Jacobian
     A = np.zeros((4 * N, N * 4))  # Only states, no control inputs in A for now
     B = np.zeros((4 * N, N))       # Constraint Jacobian should match states
-
+    print("A shape = ", A.shape)
+    print("B shape = ", B.shape)
     # Initial conditions constraint
     A[0, 0] = 1
     A[1, 1] = 1
@@ -57,13 +59,14 @@ def kkt_single_shooting():
     # Dynamics constraints
     for i in range(1, N):
         A[4 * i:4 * i + 4, 4 * (i - 1):4 * i] = -np.eye(4)
-
+    
     # KKT matrix construction
     KKT = np.zeros((N * 4 + N, N * 4 + N + N))  # Adjusted to add space for B
+    print("KKT shape = ", KKT.shape)
     KKT[:N * 4 + N, :N * 4 + N] = H
-    KKT[:N * 4 + N, N * 4 + N:N * 4 + N + N] = B.T  # Correct shape for B.T
-    KKT[N * 4 + N:, :N * 4 + N] = B  # Correct shape for B
-    KKT[N * 4 + N:, N * 4 + N:] = np.zeros((N, N))  # Zero block for additional constraints
+    # KKT[:N * 4 + N, N * 4 + N:N * 4 + N + N] = B.T  # Correct shape for B.T
+    # KKT[N * 4 + N:, :N * 4 + N] = B  # Correct shape for B
+    # KKT[N * 4 + N:, N * 4 + N:] = np.zeros((N, N))  # Zero block for additional constraints
 
     return KKT
 
