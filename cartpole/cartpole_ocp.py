@@ -194,7 +194,7 @@ if __name__ == "__main__":
     solver.use_filter_line_search = False
     # solver.extra_iteration_for_last_kkt = True
     # Solve
-    max_iter = 500
+    max_iter = 5
     # solver.setCallbacks([mim_solvers.CallbackVerbose()])
     solver.setCallbacks([crocoddyl.CallbackVerbose()])
     solver.solve(xs, us, max_iter, False) # isFeasible=False)
@@ -207,9 +207,6 @@ if __name__ == "__main__":
 
     # Create animation
     anim = animateCartpole(solver.xs)
-
-    # HTML(anim.to_jshtml())
-    HTML(anim.to_html5_video())
 
     import matplotlib.pyplot as plt 
 

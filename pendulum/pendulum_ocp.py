@@ -181,9 +181,6 @@ if __name__ == "__main__":
     # Create animation
     anim = animatePendulum(solver.xs)
 
-    # HTML(anim.to_jshtml())
-    HTML(anim.to_html5_video())
-
     import matplotlib.pyplot as plt 
 
     time_lin = np.linspace(0, dt * (T + 1), T+1)
