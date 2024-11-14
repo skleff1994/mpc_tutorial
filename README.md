@@ -33,7 +33,7 @@ conda install ipython
 
 Then run the script of your choice, e.g. the pendulum SQP by running :
 ```
-python pendulum/pendulum_sqp.py
+python pendulum/pendulum_ocp.py
 ```
 
 You may also need the `mim_robots` package to run more complex examples (e.g. Kuka). Let's install this package inside your conda environment:
