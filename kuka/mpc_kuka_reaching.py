@@ -75,7 +75,7 @@ dt = 1e-2
 runningModel = crocoddyl.IntegratedActionModelEuler(running_DAM, dt)
 terminalModel = crocoddyl.IntegratedActionModelEuler(terminal_DAM, 0.)
 # Create the shooting problem
-T = 100
+T = 50
 problem = crocoddyl.ShootingProblem(x0, [runningModel] * T, terminalModel)
 # Create solver + callbacks
 solver = mim_solvers.SolverSQP(problem)
@@ -90,10 +90,10 @@ solver.with_callbacks = True
 solver.solve(xs_init, us_init, 100)
 solver.with_callbacks = False
 
-# Extract DDP data and plot
-import ocp_utils
-ddp_data = ocp_utils.extract_ocp_data(solver, ee_frame_name='contact')
-ocp_utils.plot_ocp_results(ddp_data, which_plots='all', labels=None, markers=['.'], colors=['b'], sampling_plot=1, SHOW=True)
+# # Extract DDP data and plot
+# import ocp_utils
+# ddp_data = ocp_utils.extract_ocp_data(solver, ee_frame_name='contact')
+# ocp_utils.plot_ocp_results(ddp_data, which_plots='all', labels=None, markers=['.'], colors=['b'], sampling_plot=1, SHOW=True)
 
 # # # # # # # # # # # #
 ###  MPC SIMULATION ###
@@ -111,7 +111,7 @@ ocp_params['active_costs'] = solver.problem.runningModels[0].differential.costs.
 sim_params = {}
 sim_params['sim_freq']  = int(1./env.dt)
 sim_params['mpc_freq']  = 1000
-sim_params['T_sim']     = 2.
+sim_params['T_sim']     = 1.5
 log_rate = 100
 # Initialize simulation data 
 sim_data = mpc_utils.init_sim_data(sim_params, ocp_params, x0)
@@ -134,7 +134,7 @@ for i in range(sim_data['N_sim']):
         us_init = list(solver.us[1:]) + [solver.us[-1]] 
         
         # Solve OCP & record MPC predictions
-        # solver.solve(xs_init, us_init, ocp_params['maxiter'])
+        solver.solve(xs_init, us_init, ocp_params['maxiter'])
         sim_data['state_pred'][mpc_cycle, :, :]  = np.array(solver.xs)
         sim_data['ctrl_pred'][mpc_cycle, :, :]   = np.array(solver.us)
         # Extract relevant predictions for interpolations
@@ -184,4 +184,4 @@ for i in range(sim_data['N_sim']):
 
 plot_data = mpc_utils.extract_plot_data_from_sim_data(sim_data)
 
-mpc_utils.plot_mpc_results(plot_data, which_plots=['all'], PLOT_PREDICTIONS=True, pred_plot_sampling=int(sim_params['mpc_freq']/10))
+mpc_utils.plot_mpc_results(plot_data, which_plots=['x', 'u', 'ee_lin'], PLOT_PREDICTIONS=True, pred_plot_sampling=int(sim_params['mpc_freq']/5))
