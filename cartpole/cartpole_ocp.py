@@ -12,12 +12,29 @@ import mim_solvers
 
 
 class DifferentialActionModelCartpole(crocoddyl.DifferentialActionModelAbstract):
-    def __init__(self, isTerminal=False):
+    def __init__(self, isTerminal=False, hasConstraints=False):
+      
+        if(hasConstraints and not isTerminal):
+            ng = 1 # inequality constraint dimension
+            nh = 0 # equality constraint dimension
+        else: 
+            ng = 0
+            nh = 0
+
+        nu = 1 # control vector dimension
+        nr = 6 # cost residual dimension
+        self.nx = 4
+
         crocoddyl.DifferentialActionModelAbstract.__init__(
-            self, crocoddyl.StateVector(4), 1, 6
-        )  # nu = 1; nr = 6
+            self, crocoddyl.StateVector(4), nu, nr, ng, nh)  
         self.unone = np.zeros(self.nu)
         self.isTerminal = isTerminal
+        self.hasConstraints = hasConstraints
+
+        if hasConstraints and not isTerminal:
+            u_lim = 100.
+            self.g_lb = np.array([-u_lim])
+            self.g_ub = np.array([u_lim])
 
         # Dynamics model parameters
         self.m1 = 1.0
@@ -28,21 +45,21 @@ class DifferentialActionModelCartpole(crocoddyl.DifferentialActionModelAbstract)
         # Cost function parameters
         if(self.isTerminal):
             self.costWeights = [
-                100,   # sin(th)
-                100,   # 1-cos(th)
-                1.,   # y
-                0.1, # ydot
-                0.01, # thdot
-                0.001,   # f
+                0,   # sin(th)
+                0,   # 1-cos(th)
+                0.,   # y
+                0., # ydot
+                0., # thdot
+                0.,   # f
             ]  
         else:
             self.costWeights = [
                 0.,   # sin(th)
                 0.,   # 1-cos(th)
                 0.,   # y
-                0.01, # ydot
-                0.01, # thdot
-                0.001,   # f
+                0., # ydot
+                0., # thdot
+                0.,   # f
             ]  
 
     def calc(self, data, x, u=None):
@@ -68,6 +85,9 @@ class DifferentialActionModelCartpole(crocoddyl.DifferentialActionModelAbstract)
         data.r = np.matrix(self.costWeights * np.array([s, 1 - c, y, ydot, thdot, f])).T
         data.cost = 0.5 * sum(np.asarray(data.r) ** 2).item()
 
+        if self.hasConstraints and not self.isTerminal:
+            data.g[0] = u[0]
+
     def calcDiff(self, data, x, u=None):
         '''
         Analytical derivatives of the cartpole dynamics and cost
@@ -86,54 +106,19 @@ class DifferentialActionModelCartpole(crocoddyl.DifferentialActionModelAbstract)
         mu = m1 + m2 * s**2
         w = self.costWeights
 
-        # derivative of xddot by x, theta, xdot, thetadot
-        # derivative of thddot by x, theta, xdot, thetadot
-        data.Fx[:, :] = np.array(
-            [
-                [
-                    0.0,
-                    (m2 * g * c * c - m2 * g * s * s - m2 * lcart * c * thdot) / mu,
-                    0.0,
-                    -m2 * lcart * s / mu,
-                ],
-                [
-                    0.0,
-                    (
-                        (-s * f / lcart)
-                        + (m * g * c / lcart)
-                        - (m2 * c * c * thdot**2)
-                        + (m2 * s * s * thdot**2)
-                    )
-                    / mu,
-                    0.0,
-                    -2 * m2 * c * s * thdot,
-                ],
-            ]
-        )
-        # derivative of xddot and thddot by f
-        data.Fu[:] = np.array([1 / mu, c / (lcart * mu)])
-        # first derivative of data.cost by x, theta, xdot, thetadot
-        data.Lx[:] = np.array(
-            [
-                y * w[2] ** 2,
-                s * ((w[0] ** 2 - w[1] ** 2) * c + w[1] ** 2),
-                ydot * w[3] ** 2,
-                thdot * w[4] ** 2,
-            ]
-        )
-        # first derivative of data.cost by f
-        data.Lu[:] = np.array([f * w[5] ** 2])
-        # second derivative of data.cost by x, theta, xdot, thetadot
-        data.Lxx[:] = np.array(
-            [
-                w[2] ** 2,
-                w[0] ** 2 * (c**2 - s**2) + w[1] ** 2 * (s**2 - c**2 + c),
-                w[3] ** 2,
-                w[4] ** 2,
-            ]
-        )
-        # second derivative of data.cost by f
-        data.Luu[:] = np.array([w[5] ** 2])
+        #TODO: implement the analytical derivatives of the cost and dynamics
+        # # derivative of xddot by x, theta, xdot, thetadot
+        # # derivative of thddot by x, theta, xdot, thetadot
+        # data.Fx[:, :] = 
+        # # derivative of xddot and thddot by f
+        # data.Fu[:] = 
+        # # first derivative of data.cost by x, theta, xdot, thetadot
+        # data.Lx[:] = 
+        # # first derivative of data.cost by f
+        # data.Lu[:] = 
+        # # second derivative of data.cost by x, theta, xdot, thetadot
+        # data.Lxx[:] = 
+        # data.Luu[:] =
 
 
 if __name__ == "__main__":
@@ -144,35 +129,21 @@ if __name__ == "__main__":
     T = 100
     dt = 5e-3
 
-    cartpoleDAM = DifferentialActionModelCartpole(isTerminal=False)
-    # cartpoleData = cartpoleDAM.createData()
-    # x = cartpoleDAM.state.rand()
-    # u = np.zeros(1)
-    # cartpoleDAM.calc(cartpoleData, x, u)
+    cartpoleDAM = DifferentialActionModelCartpole(isTerminal=False, hasConstraints=True)
     cartpoleND = crocoddyl.DifferentialActionModelNumDiff(cartpoleDAM, True)
     cartpoleIAM = crocoddyl.IntegratedActionModelEuler(cartpoleND, dt)
 
-    terminalCartpole = DifferentialActionModelCartpole(isTerminal=True)
-    terminalCartpoleDAM = crocoddyl.DifferentialActionModelNumDiff(terminalCartpole, True)
-    terminalCartpoleIAM = crocoddyl.IntegratedActionModelEuler(terminalCartpoleDAM)
+    terminalCartpoleDAM = DifferentialActionModelCartpole(isTerminal=True)
+    terminalCartpoleDAM.costWeights[0] = 100
+    terminalCartpoleDAM.costWeights[1] = 100
+    terminalCartpoleDAM.costWeights[2] = 1.0
+    terminalCartpoleDAM.costWeights[3] = 0.1
+    terminalCartpoleDAM.costWeights[4] = 0.01
+    terminalCartpoleDAM.costWeights[5] = 0.0001
+    terminalCartpoleND = crocoddyl.DifferentialActionModelNumDiff(terminalCartpoleDAM, True)
+    terminalCartpoleIAM = crocoddyl.IntegratedActionModelEuler(terminalCartpoleND)
 
-    terminalCartpole.costWeights[0] = 100
-    terminalCartpole.costWeights[1] = 100
-    terminalCartpole.costWeights[2] = 1.0
-    terminalCartpole.costWeights[3] = 0.1
-    terminalCartpole.costWeights[4] = 0.01
-    terminalCartpole.costWeights[5] = 0.0001
     problem = crocoddyl.ShootingProblem(x0, [cartpoleIAM] * T, terminalCartpoleIAM)
-
-    # # Create the running models
-    # running_DAM = DifferentialActionModelCartpole(isTerminal=False)
-    # running_model = crocoddyl.IntegratedActionModelEuler(running_DAM, dt)
-
-    # terminal_DAM = DifferentialActionModelCartpole(isTerminal=True)
-    # terminal_model = crocoddyl.IntegratedActionModelEuler(terminal_DAM, 0.)
-
-    # # OCP
-    # problem = crocoddyl.ShootingProblem(x0, [running_model] * T, terminal_model)
 
     # Define warm start (feasible)
     # us = [u0] * T
@@ -183,27 +154,20 @@ if __name__ == "__main__":
     xs = [x0] * (T + 1)
     
     # Define solver
-    # solver = mim_solvers.SolverSQP(problem)
-    solver = crocoddyl.SolverFDDP(problem)
-    # solver = crocoddyl.SolverDDP(problem)
+    solver = mim_solvers.SolverCSQP(problem)
 
     solver.termination_tolerance = 1e-4
     solver.with_callbacks = True 
     solver.eps_abs = 1e-10
     solver.eps_rel = 0.
-    solver.use_filter_line_search = False
-    # solver.extra_iteration_for_last_kkt = True
+    solver.use_filter_line_search = True
     # Solve
-    max_iter = 5
-    # solver.setCallbacks([mim_solvers.CallbackVerbose()])
-    solver.setCallbacks([crocoddyl.CallbackVerbose()])
-    solver.solve(xs, us, max_iter, False) # isFeasible=False)
+    max_iter = 50
+    solver.setCallbacks([mim_solvers.CallbackVerbose()])
+    solver.solve(xs, us, max_iter, False)
 
     x_traj = np.array(solver.xs)
     u_traj = np.array(solver.us)
-
-    # %%capture
-    # %matplotlib inline
 
     # Create animation
     anim = animateCartpole(solver.xs)
@@ -212,16 +176,35 @@ if __name__ == "__main__":
 
     time_lin = np.linspace(0, dt * (T + 1), T+1)
 
-    fig, axs = plt.subplots(4)
-    for i in range(4):
-        axs[i].plot(time_lin, x_traj[:, i])
-        axs[i].grid()
-    fig.suptitle("State trajectory")
+    # fig, axs = plt.subplots(4)
+    # for i in range(4):
+    #     axs[i].plot(time_lin, x_traj[:, i])
+    #     axs[i].grid()
+    # fig.suptitle("State trajectory")
 
-    plt.figure()
-    plt.plot(time_lin[:-1], u_traj[:])
-    plt.title("Control trajectory")
-    plt.grid()
+    # plt.figure()
+    # plt.plot(time_lin[:-1], u_traj[:])
+    # plt.title("Control trajectory")
+    # plt.grid()
+
+        # fancy plot with discretization
+    fig, (ax1, ax2) = plt.subplots(2,1, sharex='col')
+    time_discrete = range(T+1)
+    ax1.plot(time_discrete,  x_traj[:, 0], linewidth=1, color='r', marker='.', label='Cart position $y$ ($x_1$)')
+    ax1.plot(time_discrete,  x_traj[:, 1], linewidth=1, color='g', marker='.', label='Pole angular position $theta$ ($x_2$)')
+    ax1.plot(time_discrete,  x_traj[:, 2], linewidth=1, color='b', marker='.', label='Cart velocity $y_dot$ ($x_3$)')
+    ax1.plot(time_discrete,  x_traj[:, 3], linewidth=1, color='y', marker='.', label='Pole angular velocity $theta_dot$ ($x_4$)')
+    ax1.grid()
+    ax1.legend(fontsize=20)
+
+    ax2.step(time_discrete[:-1],  u_traj, where='post', linestyle=None, color='k', label='Control input (u)')
+    ax2.set_xlabel("k", fontsize=20)
+    # plt.ylabel("$\\dot\\theta$", fontsize=18)
+    ax2.grid()
+    ax2.legend(fontsize=20)
+    ax2.locator_params(axis='x', nbins=20) 
+
+
 
     plt.show()
 
