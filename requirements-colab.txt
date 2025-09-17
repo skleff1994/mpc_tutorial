@@ -1,5 +1,0 @@
-crocoddyl==3.0.1
-mim-solvers
-osqp
-pin==3.7.0
-numpy==2.2.6
