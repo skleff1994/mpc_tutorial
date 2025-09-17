@@ -1,0 +1,8 @@
+numpy
+scipy
+matplotlib
+crocoddyl
+pinocchio
+mim-solvers
+osqp
+ipython
