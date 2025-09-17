@@ -58,7 +58,7 @@ class DiffActionModelPendulum(crocoddyl.DifferentialActionModelAbstract):
         self.unone = np.zeros(self.nu)
 
         if hasConstraints and not isTerminal:
-            u_lim = 2.
+            u_lim = 5.
             self.g_lb = np.array([- u_lim])
             self.g_ub = np.array([u_lim])
 
@@ -161,8 +161,9 @@ if __name__ == "__main__":
     # Define solver
     # solver = mim_solvers.SolverCSQP(problem)
     # solver = mim_solvers.SolverSQP(problem)
+    solver = mim_solvers.SolverCSQP(problem)
     # solver = crocoddyl.SolverFDDP(problem)
-    solver = crocoddyl.SolverDDP(problem)
+    # solver = crocoddyl.SolverDDP(problem)
     solver.termination_tolerance = 1e-4
     solver.with_callbacks = True 
     solver.eps_abs = 1e-10
@@ -171,8 +172,8 @@ if __name__ == "__main__":
     # solver.extra_iteration_for_last_kkt = True
     # Solve
     max_iter = 200
-    # solver.setCallbacks([mim_solvers.CallbackVerbose()])
-    solver.setCallbacks([crocoddyl.CallbackVerbose()])
+    solver.setCallbacks([mim_solvers.CallbackVerbose()])
+    # solver.setCallbacks([crocoddyl.CallbackVerbose()])
     solver.solve(xs, us, max_iter, False)
 
     x_traj = np.array(solver.xs)
@@ -211,12 +212,12 @@ if __name__ == "__main__":
     # fancy plot with discretization
     fig, (ax1, ax2) = plt.subplots(2,1, sharex='col')
     time_discrete = range(T+1)
-    ax1.plot(time_discrete,  x_traj[:, 0], linewidth=1, color='r', marker='.', label='Pendulum position $\\theta$ ($x_1$)')
-    ax1.plot(time_discrete,  x_traj[:, 1], linewidth=1, color='g', marker='.', label='Pendulum velocity $\\omega$ ($x_2$)')
+    ax1.plot(time_discrete,  x_traj[:, 0], linewidth=3, color='r', marker='.', label='Pendulum position $\\theta$ ($x_1$)')
+    ax1.plot(time_discrete,  x_traj[:, 1], linewidth=3, color='g', marker='.', label='Pendulum velocity $\\omega$ ($x_2$)')
     ax1.grid()
     ax1.legend(fontsize=20)
 
-    ax2.step(time_discrete[:-1],  u_traj, where='post', linestyle=None, color='b', label='Control input (u)')
+    ax2.step(time_discrete[:-1],  u_traj, where='post', linewidth=3, linestyle=None, color='b', label='Control input (u)')
     ax2.set_xlabel("k", fontsize=20)
     # plt.ylabel("$\\dot\\theta$", fontsize=18)
     ax2.grid()

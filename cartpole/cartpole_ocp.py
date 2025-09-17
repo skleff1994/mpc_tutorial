@@ -188,21 +188,25 @@ if __name__ == "__main__":
     # plt.grid()
 
         # fancy plot with discretization
-    fig, (ax1, ax2) = plt.subplots(2,1, sharex='col')
+    fig, ax1 = plt.subplots(1,1, sharex='col')
     time_discrete = range(T+1)
-    ax1.plot(time_discrete,  x_traj[:, 0], linewidth=1, color='r', marker='.', label='Cart position $y$ ($x_1$)')
-    ax1.plot(time_discrete,  x_traj[:, 1], linewidth=1, color='g', marker='.', label='Pole angular position $theta$ ($x_2$)')
-    ax1.plot(time_discrete,  x_traj[:, 2], linewidth=1, color='b', marker='.', label='Cart velocity $y_dot$ ($x_3$)')
-    ax1.plot(time_discrete,  x_traj[:, 3], linewidth=1, color='y', marker='.', label='Pole angular velocity $theta_dot$ ($x_4$)')
+    # ax1.plot(time_discrete,  x_traj[:, 0], linewidth=1, color='r', marker='.', label='Cart position $y$ ($x_1$)')
+    # ax1.plot(time_discrete,  x_traj[:, 1], linewidth=1, color='g', marker='.', label='Pole angular position $theta$ ($x_2$)')
+    # ax1.plot(time_discrete,  x_traj[:, 2], linewidth=1, color='b', marker='.', label='Cart velocity $y_dot$ ($x_3$)')
+    # ax1.plot(time_discrete,  x_traj[:, 3], linewidth=1, color='y', marker='.', label='Pole angular velocity $theta_dot$ ($x_4$)')
+    ax1.plot(time_discrete,  x_traj[:, 0], linewidth=1, color='r', marker='.', label='State ($x_1$)')
+    ax1.plot(time_discrete,  x_traj[:, 1], linewidth=1, color='g', marker='.', label='State ($x_2$)')
+    ax1.plot(time_discrete,  x_traj[:, 2], linewidth=1, color='b', marker='.', label='State ($x_3$)')
+    ax1.plot(time_discrete,  x_traj[:, 3], linewidth=1, color='y', marker='.', label='State ($x_4$)')
     ax1.grid()
     ax1.legend(fontsize=20)
 
-    ax2.step(time_discrete[:-1],  u_traj, where='post', linestyle=None, color='k', label='Control input (u)')
-    ax2.set_xlabel("k", fontsize=20)
-    # plt.ylabel("$\\dot\\theta$", fontsize=18)
-    ax2.grid()
-    ax2.legend(fontsize=20)
-    ax2.locator_params(axis='x', nbins=20) 
+    # ax2.step(time_discrete[:-1],  u_traj, where='post', linestyle=None, color='k', label='Action (u)')
+    # ax2.set_xlabel("Time step", fontsize=20)
+    # # plt.ylabel("$\\dot\\theta$", fontsize=18)
+    # ax2.grid()
+    # ax2.legend(fontsize=20)
+    # ax2.locator_params(axis='x', nbins=20) 
 
 
 
