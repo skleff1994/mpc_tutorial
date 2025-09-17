@@ -1,5 +1,5 @@
-crocoddyl=3.0.1
-pinocchio=3.7.0
+crocoddyl==3.0.1
+pinocchio==3.7.0
 mim-solvers
 osqp
-numpy=2.2.6
+numpy==2.2.6
