@@ -15,7 +15,22 @@ The repo is still under construction (do not look into `experimental/`). The scr
 - matplotlib
 - [mim_robots](https://github.com/machines-in-motion/mim_robots)
 
-# Installation
+# Launch in Colab
+Click this badge to open in Google Colab:
+
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/skleff1994/mpc_tutorial/blob/master/notebooks/mpc_tutorial_part1.ipynb)
+
+- Colab will automatically install dependencies from `requirements-colab.txt`.
+
+# Launch in Binder
+Click this badge to open in Binder:
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/skleff1994/mpc_tutorial/master)
+
+- Binder will automatically install dependencies from `environment.yml`.
+
+
+## Locally
 It is recommended to use conda. Install miniconda if you do not have it already by following the instructions from the anaconda webpage : https://docs.anaconda.com/miniconda/miniconda-install/
 
 Then create a conda environment :
