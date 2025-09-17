@@ -97,8 +97,6 @@ dependencies:
   - p11-kit=0.24.1=hc5aa10d_0
   - pinocchio=3.7.0=py313ha36388c_2
   - pip=25.2=pyh145f28c_0
-  - python=3.13.7=h2b335a9_100_cp313
-  - python_abi=3.13=8_cp313
   - qhull=2020.2=h434a139_5
   - qhull-static=2020.2=h434a139_5
   - readline=8.2=h8c095d6_2
