@@ -1,4 +1,4 @@
-name: mpc_tutorial
+name: colab
 channels:
   - conda-forge
 dependencies:
@@ -10,3 +10,4 @@ dependencies:
   - pinocchio
   - mim-solvers
   - osqp
+  - ipython
