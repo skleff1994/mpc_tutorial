@@ -1,0 +1,7 @@
+numpy
+scipy
+matplotlib
+crocoddyl
+pinocchio
+mim_solvers
+osqp
