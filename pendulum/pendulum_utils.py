@@ -9,12 +9,6 @@ from matplotlib import animation
 from matplotlib import pyplot as plt
 
 import crocoddyl
-from casadi import MX, SX, jacobian
-from casadi import Function
-
-import casadi as ca
-import numpy as np
-
 
 class DiffActionModelPendulum(crocoddyl.DifferentialActionModelAbstract):
     '''
@@ -131,77 +125,6 @@ class DiffActionModelPendulum(crocoddyl.DifferentialActionModelAbstract):
             data.Gx = np.zeros((self.ng, self.nx)) 
             data.Gu[0] = 1.
 
-class DiffActionModelPendulumSymbolic(crocoddyl.DifferentialActionModelAbstract):
-    def __init__(self, isTerminal=False, hasConstraints=False, dt=0.1):
-        self.dt = dt
-        self.nx = 2
-        # self.nu = 1
-        # self.ndx = 2
-        nr = 4
-        ng = 0
-        nh = 0
-        if hasConstraints and not isTerminal:
-            ng = 1
-
-        self.isTerminal = isTerminal
-        self.hasConstraints = hasConstraints
-
-        # Cost weights
-        self.costWeights = np.array([1, 1, 1e-2, 1e-3])
-
-        # Initialize Crocoddyl state
-        state = crocoddyl.StateVector(self.nx)
-        crocoddyl.DifferentialActionModelAbstract.__init__(self, state, self.nu, nr, ng, nh)
-
-        # Predefine symbolic variables
-        x_sym = ca.SX.sym('x', self.nx)
-        u_sym = ca.SX.sym('u', self.nu)
-
-        # Define dynamics
-        s, c = ca.sin(x_sym[0]), ca.cos(x_sym[0])
-        xdot = ca.vertcat(x_sym[1],
-                          -9.81 * s)  # simple pendulum dynamics
-
-        # Discrete integration
-        x_next = x_sym + dt * xdot + (dt * u_sym)
-
-        # Define cost
-        r = ca.vertcat(s, 1 - c, x_sym[1], u_sym[0])
-        cost = 0.5 * ca.mtimes(ca.diag(self.costWeights), r)**2
-        cost = 0.5 * ca.sum1(cost)
-
-        # CasADi functions
-        self.f_calc = ca.Function('calc', [x_sym, u_sym], [x_next, cost, r])
-        self.f_jac = ca.Function('jac', [x_sym, u_sym],
-                                 [ca.jacobian(x_next, x_sym),  # Fx
-                                  ca.jacobian(x_next, u_sym),  # Fu
-                                  ca.jacobian(cost, x_sym),    # Lx
-                                  ca.jacobian(cost, u_sym),    # Lu
-                                  ca.hessian(cost, x_sym)[0],  # Lxx
-                                  ca.hessian(cost, u_sym)[0],  # Luu
-                                  ca.jacobian(ca.jacobian(cost, u_sym), x_sym)])  # Lxu
-
-    def calc(self, data, x, u=None):
-        if u is None:
-            u = np.zeros(self.nu)
-        x_next, cost, r = self.f_calc(x, u)
-        data.xout[:] = np.array(x_next).flatten()
-        data.cost = float(cost)
-        data.r[:] = np.array(r).flatten()
-
-    def calcDiff(self, data, x, u=None):
-        if u is None:
-            u = np.zeros(self.nu)
-        Fx, Fu, Lx, Lu, Lxx, Luu, Lxu = self.f_jac(x, u)
-
-        # Ensure proper shapes for Crocoddyl
-        data.Fx[:] = np.array(Fx).reshape(self.nx, self.nx)
-        data.Fu[:] = np.array(Fu).reshape(self.nx, self.nu)
-        data.Lx[:] = np.array(Lx).flatten()
-        data.Lu[:] = np.array(Lu).flatten()
-        data.Lxx[:] = np.array(Lxx).reshape(self.nx, self.nx)
-        data.Luu[:] = np.array(Luu).reshape(self.nu, self.nu)
-        data.Lxu[:] = np.array(Lxu).reshape(self.nx, self.nu)
 
 def createPendulumOptimalControlProblem(x0=np.zeros(2), dt=2e-2, T=100, hasConstraints=False):
     '''
@@ -247,13 +170,26 @@ def plotPendulumSolution(xs, us, T=100):
     ax2.locator_params(axis='x', nbins=20) 
     plt.show()
 
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import animation
+from IPython.display import HTML
 
-def animatePendulum(xs, sleep=50, show=False):
+def animatePendulum(xs, sleep=50, show=False, mode="html"):
+    """
+    xs: trajectory (list/array of states)
+    sleep: ms per frame
+    show: if True, open matplotlib window (only outside Jupyter)
+    mode: 'html' for inline animation, 'js' for JavaScript, 'video' for mp4
+    """
     print("processing the animation ... ")
     cart_size = 0.1
     pole_length = 5.0
-    fig = plt.figure()
-    ax = plt.axes(xlim=(-8, 8), ylim=(-6, 6))
+
+    fig, ax = plt.subplots()
+    ax.set_xlim(-8, 8)
+    ax.set_ylim(-6, 6)
+
     patch = plt.Rectangle((0.0, 0.0), cart_size, cart_size, fc="b")
     (line,) = ax.plot([], [], "k-", lw=2)
     time_text = ax.text(0.02, 0.95, "", transform=ax.transAxes)
@@ -265,12 +201,12 @@ def animatePendulum(xs, sleep=50, show=False):
         return patch, line, time_text
 
     def animate(i):
-        x_cart = 0.0 #xs[i][0]
+        x_cart = 0.0
         y_cart = 0.0
-        theta = xs[i][1]
+        theta = xs[i][1]  # assuming state = [?, theta]
         patch.set_xy([x_cart - cart_size / 2, y_cart - cart_size / 2])
-        x_pole = np.cumsum([x_cart, -pole_length * sin(theta)])
-        y_pole = np.cumsum([y_cart, pole_length * cos(theta)])
+        x_pole = np.cumsum([x_cart, -pole_length * np.sin(theta)])
+        y_pole = np.cumsum([y_cart, pole_length * np.cos(theta)])
         line.set_data(x_pole, y_pole)
         time = i * sleep / 1000.0
         time_text.set_text(f"time = {time:.1f} sec")
@@ -279,8 +215,20 @@ def animatePendulum(xs, sleep=50, show=False):
     anim = animation.FuncAnimation(
         fig, animate, init_func=init, frames=len(xs), interval=sleep, blit=True
     )
+
     print("... processing done")
+
     if show:
         plt.show()
-    return anim
-    
+        return None
+    plt.close(fig)
+    if mode == "html":
+        return HTML(anim.to_html5_video())
+    elif mode == "js":
+        return HTML(anim.to_jshtml())
+    elif mode == "video":
+        anim.save("pendulum.mp4", fps=1000/sleep, extra_args=["-vcodec", "libx264"])
+        from IPython.display import Video
+        return Video("pendulum.mp4")
+    else:
+        return anim

@@ -170,13 +170,26 @@ def plotPendulumSolution(xs, us, T=100):
     ax2.locator_params(axis='x', nbins=20) 
     plt.show()
 
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import animation
+from IPython.display import HTML
 
-def animatePendulum(xs, sleep=50, show=False):
+def animatePendulum(xs, sleep=50, show=False, mode="html"):
+    """
+    xs: trajectory (list/array of states)
+    sleep: ms per frame
+    show: if True, open matplotlib window (only outside Jupyter)
+    mode: 'html' for inline animation, 'js' for JavaScript, 'video' for mp4
+    """
     print("processing the animation ... ")
     cart_size = 0.1
     pole_length = 5.0
-    fig = plt.figure()
-    ax = plt.axes(xlim=(-8, 8), ylim=(-6, 6))
+
+    fig, ax = plt.subplots()
+    ax.set_xlim(-8, 8)
+    ax.set_ylim(-6, 6)
+
     patch = plt.Rectangle((0.0, 0.0), cart_size, cart_size, fc="b")
     (line,) = ax.plot([], [], "k-", lw=2)
     time_text = ax.text(0.02, 0.95, "", transform=ax.transAxes)
@@ -188,12 +201,12 @@ def animatePendulum(xs, sleep=50, show=False):
         return patch, line, time_text
 
     def animate(i):
-        x_cart = 0.0 #xs[i][0]
+        x_cart = 0.0
         y_cart = 0.0
-        theta = xs[i][1]
+        theta = xs[i][1]  # assuming state = [?, theta]
         patch.set_xy([x_cart - cart_size / 2, y_cart - cart_size / 2])
-        x_pole = np.cumsum([x_cart, -pole_length * sin(theta)])
-        y_pole = np.cumsum([y_cart, pole_length * cos(theta)])
+        x_pole = np.cumsum([x_cart, -pole_length * np.sin(theta)])
+        y_pole = np.cumsum([y_cart, pole_length * np.cos(theta)])
         line.set_data(x_pole, y_pole)
         time = i * sleep / 1000.0
         time_text.set_text(f"time = {time:.1f} sec")
@@ -202,8 +215,20 @@ def animatePendulum(xs, sleep=50, show=False):
     anim = animation.FuncAnimation(
         fig, animate, init_func=init, frames=len(xs), interval=sleep, blit=True
     )
+
     print("... processing done")
+
     if show:
         plt.show()
-    return anim
-    
+        return None
+    plt.close(fig)
+    if mode == "html":
+        return HTML(anim.to_html5_video())
+    elif mode == "js":
+        return HTML(anim.to_jshtml())
+    elif mode == "video":
+        anim.save("pendulum.mp4", fps=1000/sleep, extra_args=["-vcodec", "libx264"])
+        from IPython.display import Video
+        return Video("pendulum.mp4")
+    else:
+        return anim
