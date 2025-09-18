@@ -221,8 +221,16 @@ def animatePendulum(xs, sleep=50, show=False, mode="html"):
     if show:
         plt.show()
         return None
+
     plt.close(fig)
-    if mode == "html":
+
+    # Choose safe mode for Binder
+    if mode == "auto":
+        try:
+            return HTML(anim.to_html5_video())  # requires ffmpeg
+        except (RuntimeError, FileNotFoundError):
+            return HTML(anim.to_jshtml())       # fallback if ffmpeg not found
+    elif mode == "html":
         return HTML(anim.to_html5_video())
     elif mode == "js":
         return HTML(anim.to_jshtml())
