@@ -9,7 +9,7 @@ import crocoddyl
 import mim_solvers
 
 from IPython.display import HTML
-from pendulum_utils import animatePendulum
+from .pendulum_utils import animatePendulum
 
 
 
