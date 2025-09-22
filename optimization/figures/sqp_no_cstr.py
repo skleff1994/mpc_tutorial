@@ -1,9 +1,18 @@
 # SQP visual: Rosenbrock contours + local quadratic (Hessian-based) approximations and iteration arrows
 import numpy as np
 import matplotlib.pyplot as plt
-
+COST_COLOR = '#1E961E'   # Green
+VARS_COLOR = '#3C32A0'   # Blue
+CSTR_COLOR = '#FF783C'   # Red
 a = 1.
 b = 10.
+
+def constraint_g(x, y):
+    return x**2 + y**2 - 1.5
+
+def grad_constraint_g(x, y):
+    return np.array([2*x, 2*y])
+
 
 # Rosenbrock function, gradient, Hessian
 def f(x, y, a=a, b=b):
@@ -85,9 +94,9 @@ def plot_qp_step(xk, step_id, ax=None):
 
     # Contour of q(p)
     cs = ax.contour(P1, P2, Q, levels=20, cmap='Greens_r')
-    print(xk)
+    # print(xk)
     # Plot origin (p=0) and model minimizer p_k 
-    ax.plot(0, 0, marker='o', color='#3C32A0', label='Current iterate', markersize=10)
+    ax.plot(0, 0, marker='o', color=VARS_COLOR, label='Current iterate', markersize=10)
     ax.plot(pk[0], pk[1], 'g*', label='QP minimizer $p_k$', markersize=12)
     ax.arrow(0, 0, pk[0], pk[1], head_width=0.07, color='red', length_includes_head=True, linewidth=2)
     # ax.set_xlim(-1.5, 1.5)
@@ -99,12 +108,12 @@ def plot_qp_step(xk, step_id, ax=None):
     ax.legend()
     return ax
 
-
 # Generate contour grid
 x = np.linspace(-1.5, 1.5, 300)
 y = np.linspace(-0.5, 2.0, 300)
 X, Y = np.meshgrid(x, y)
 Z = f(X, Y)
+C = constraint_g(X, Y)
 
 # Initial point
 x0 = np.array([-1., 1.0])
@@ -116,19 +125,17 @@ fig, ax = plt.subplots(figsize=(8, 6), dpi=150)
 
 # Plot Rosenbrock contours
 levels = np.geomspace(1e-2, 1e3, 20)
-# cs = ax.contour(X, Y, Z, levels=levels, linewidths=0.8)
-cs = ax.contour(X, Y, Z, levels=levels, cmap='Greens_r', linewidths=1)
+# cs = ax.contour(X, Y, COST_CONTOUR, levels=levels, linewidths=0.8)
+ax.contour(X, Y, Z, levels=levels, cmap='Greens_r', linewidths=1)
 
-# Plot iteration points and arrows
-# ax.plot(pts[:,0], pts[:,1], marker='o', linestyle='-')
-# Plot all intermediate points as small black dots connected by lines
+# Plot all intermediate points as small black dots 
 ax.plot(pts[:,0], pts[:,1], marker='o', linestyle='None', markersize=4, color="#000000")
 
 # Highlight initial point (blue dot, larger)
-# ax.plot(pts[0,0], pts[0,1], marker='o', color='#3C32A0', markersize=8, label='Initial point')
+# ax.plot(pts[0,0], pts[0,1], marker='o', color=VARS_COLOR, markersize=8, label='Initial point')
 
 # Highlight final point (red star)
-ax.plot(pts[-1,0], pts[-1,1], marker='*', color='#3C32A0', markersize=20, label='Optimum')
+ax.plot(pts[-1,0], pts[-1,1], marker='*', color=VARS_COLOR, markersize=20, label='Optimum')
 
 for i in range(len(pts)-1):
     ax.annotate(
@@ -137,11 +144,10 @@ for i in range(len(pts)-1):
         xytext=tuple(pts[i]),
         arrowprops=dict(arrowstyle='->', lw=1.2, alpha=1./(i+1), color='red')
     )
-    ax.text(pts[i,0]+0.03, pts[i,1]+0.05, f'k={i}', fontdict={'size': 18, 'color': '#3C32A0', 'alpha': 1./(i+1)})
+    ax.text(pts[i,0]+0.03, pts[i,1]+0.05, f'k={i}', fontdict={'size': 18, 'color': VARS_COLOR, 'alpha': 1./(i+1)})
 
-ax.text(pts[-1,0]+0.03, pts[-1,1]+0.05, 'Optimum', fontdict={'size': 18, 'color': '#3C32A0'})
+ax.text(pts[-1,0]+0.03, pts[-1,1]+0.05, 'Optimum', fontdict={'size': 18, 'color': VARS_COLOR})
 
-# Draw local quadratic approximations as ellipse level-sets around first three points
 def draw_quadratic_level(ax, xk, yk, level=1.0):
     g = grad(xk, yk)
     H = hess(xk, yk)
@@ -159,25 +165,20 @@ def draw_quadratic_level(ax, xk, yk, level=1.0):
     E = (vecs @ np.diag(axes) @ np.vstack([np.cos(theta), np.sin(theta)])).T
     Ex = E[:,0] + xk
     Ey = E[:,1] + yk
-    ax.plot(Ex, Ey, linewidth=1, color='#3C32A0')
+    ax.plot(Ex, Ey, linewidth=1, color=VARS_COLOR)
 
 # choose levels scaled to show different bowls
 levels_q = [0.05, 0.03, 0.02]
 for (xk, yk), lvl in zip(pts[:-1], levels_q):
     draw_quadratic_level(ax, xk, yk, level=lvl)
-
 # Cosmetic labels (no specific colors set)
 ax.set_title("Sequential Quadratic Programming (SQP)")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
 ax.set_xlim(-1.5, 1.5)
 ax.set_ylim(-0.5, 2.0)
-ax.grid(False)
-# # Save and also display
-# out_path = "sqp_visual.png"
+plt.grid()
 plt.tight_layout()
-# plt.savefig(out_path)
-# # out_path
 
 # Show QP models for first 3 steps
 fig, axs = plt.subplots(1, 5, figsize=(15, 4))
