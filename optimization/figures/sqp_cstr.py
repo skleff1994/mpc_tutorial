@@ -33,24 +33,45 @@ def hess(x, y, a=a, b=b):
 def sqp_rosenbrock(x0, max_iter=100, tol=1e-6):
     path = [x0]
     xk = x0.copy()
-    
+
     for _ in range(max_iter):
-        g = grad(*xk)
-        H = hess(*xk)
+        gk = grad(*xk)
+        Hk = hess(*xk)
+        Hk = 0.5 * (Hk + Hk.T)  # symmetrize
 
-        # Regularize Hessian to avoid numerical issues (ensure positive definiteness)
+        # Regularize Hessian (ensure positive definite)
         eps = 1e-6
-        H = 0.5 * (H + H.T)
-        eigvals = np.linalg.eigvalsh(H)
+        eigvals = np.linalg.eigvalsh(Hk)
         if np.any(eigvals <= 0):
-            H += np.eye(2) * (eps - np.min(eigvals))
+            Hk += np.eye(2) * (eps - np.min(eigvals) + eps)
 
-        # Newton step: solve H p = -g
-        pk = -np.linalg.solve(H, g)
+        # Constraint values and gradients
+        g_val = constraint_g(*xk)
+        A = grad_constraint_g(*xk).reshape(1, -1)  # shape (1, 2)
+        b = -g_val
+
+        # Solve QP: min 1/2 p^T H p + gk^T p s.t. A p <= b
+        # Using CVXOPT or custom solver — but here we'll use scipy.optimize.minimize
+        from scipy.optimize import minimize
+
+        def qp_objective(p):
+            return 0.5 * p @ Hk @ p + gk @ p
+
+        def qp_constraint(p):
+            return b - A @ p  # constraint: A p <= b => b - A p >= 0
+
+        cons = {'type': 'ineq', 'fun': qp_constraint}
+        res = minimize(qp_objective, np.zeros(2), constraints=cons, method='SLSQP')
+
+        if not res.success:
+            print("QP failed at step", len(path) - 1)
+            break
+
+        pk = res.x
 
         # Line search (backtracking)
         alpha = 1.0
-        while f(*(xk + alpha * pk)) > f(*xk) + 1e-4 * alpha * g @ pk:
+        while f(*(xk + alpha * pk)) > f(*xk) + 1e-4 * alpha * gk @ pk:
             alpha *= 0.5
             if alpha < 1e-6:
                 break
@@ -63,50 +84,6 @@ def sqp_rosenbrock(x0, max_iter=100, tol=1e-6):
 
     return np.array(path)
 
-
-# def plot_qp_step(xk, step_id, ax=None):
-#     g = grad(*xk)
-#     H = hess(*xk)
-#     H = 0.5 * (H + H.T)
-    
-#     # Solve QP: min_p g^T p + 0.5 p^T H p
-#     pk = -np.linalg.solve(H, g)
-
-#     # Plot setup
-#     if ax is None:
-#         fig, ax = plt.subplots(figsize=(4, 4))
-
-#     # Define local grid around p = 0
-#     if(step_id==0):
-#         grid_range = 5.0
-#     else:
-#         grid_range = 1.0
-#     res = 100
-#     p1 = np.linspace(-grid_range, grid_range, res)
-#     p2 = np.linspace(-grid_range, grid_range, res)
-#     P1, P2 = np.meshgrid(p1, p2)
-
-#     Q = np.zeros_like(P1)
-#     for i in range(res):
-#         for j in range(res):
-#             p = np.array([P1[i,j], P2[i,j]])
-#             Q[i,j] = g @ p + 0.5 * p @ H @ p
-
-#     # Contour of q(p)
-#     cs = ax.contour(P1, P2, Q, levels=20, cmap='Greens_r')
-#     # print(xk)
-#     # Plot origin (p=0) and model minimizer p_k 
-#     ax.plot(0, 0, marker='o', color=VARS_COLOR, label='Current iterate', markersize=10)
-#     ax.plot(pk[0], pk[1], 'g*', label='QP minimizer $p_k$', markersize=12)
-#     ax.arrow(0, 0, pk[0], pk[1], head_width=0.07, color='red', length_includes_head=True, linewidth=2)
-#     # ax.set_xlim(-1.5, 1.5)
-#     # ax.set_ylim(-0.5, 2.0)
-#     ax.set_title(f'QP Model at Step {step_id}')
-#     ax.set_xlabel('$p_1$')
-#     ax.set_ylabel('$p_2$')
-#     ax.set_aspect('equal')
-#     ax.legend()
-#     return ax
 
 def plot_qp_step(xk, step_id, ax=None):
     g = grad(*xk)
@@ -139,7 +116,7 @@ def plot_qp_step(xk, step_id, ax=None):
     # Plot origin (p=0) and QP step pk
     ax.plot(0, 0, marker='o', color=VARS_COLOR, label='Current iterate', markersize=10)
     ax.plot(pk[0], pk[1], 'g*', label='QP minimizer $p_k$', markersize=12)
-    ax.arrow(0, 0, pk[0], pk[1], head_width=0.07, color='red', length_includes_head=True, linewidth=2)
+    ax.arrow(0, 0, pk[0], pk[1], head_width=0.07, color='cyan', length_includes_head=True, linewidth=2)
 
     # === Constraint Linearization ===
     # constraint: g(x) ≈ g(xk) + ∇g(xk)^T (x - xk) ≤ 0
@@ -212,7 +189,7 @@ for i in range(len(pts)-1):
         '',
         xy=tuple(pts[i+1]),
         xytext=tuple(pts[i]),
-        arrowprops=dict(arrowstyle='->', lw=1.2, alpha=1./(i+1), color='red')
+        arrowprops=dict(arrowstyle='->', lw=1.2, alpha=1./(i+1), color='cyan')
     )
     ax.text(pts[i,0]+0.03, pts[i,1]+0.05, f'k={i}', fontdict={'size': 18, 'color': VARS_COLOR, 'alpha': 1./(i+1)})
 

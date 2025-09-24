@@ -98,10 +98,10 @@ def plot_qp_step(xk, step_id, ax=None):
     # Plot origin (p=0) and model minimizer p_k 
     ax.plot(0, 0, marker='o', color=VARS_COLOR, label='Current iterate', markersize=10)
     ax.plot(pk[0], pk[1], 'g*', label='QP minimizer $p_k$', markersize=12)
-    ax.arrow(0, 0, pk[0], pk[1], head_width=0.07, color='red', length_includes_head=True, linewidth=2)
+    ax.arrow(0, 0, pk[0], pk[1], head_width=0.07, color='cyan', length_includes_head=True, linewidth=2)
     # ax.set_xlim(-1.5, 1.5)
     # ax.set_ylim(-0.5, 2.0)
-    ax.set_title(f'QP Model at Step {step_id}')
+    ax.set_title(f'QP Model at iteration {step_id}')
     ax.set_xlabel('$p_1$')
     ax.set_ylabel('$p_2$')
     ax.set_aspect('equal')
@@ -124,12 +124,12 @@ pts = sqp_rosenbrock(x0, max_iter=10)
 fig, ax = plt.subplots(figsize=(8, 6), dpi=150)
 
 # Plot Rosenbrock contours
-levels = np.geomspace(1e-2, 1e3, 20)
+levels = np.geomspace(1e-2, 1e3, 50)
 # cs = ax.contour(X, Y, COST_CONTOUR, levels=levels, linewidths=0.8)
-ax.contour(X, Y, Z, levels=levels, cmap='Greens_r', linewidths=1)
+ax.contour(X, Y, Z, levels=levels, cmap='Greens_r', linewidths=1, alpha=0.5)
 
 # Plot all intermediate points as small black dots 
-ax.plot(pts[:,0], pts[:,1], marker='o', linestyle='None', markersize=4, color="#000000")
+ax.plot(pts[:,0], pts[:,1], marker='o', linestyle='None', markersize=4, color=VARS_COLOR)
 
 # Highlight initial point (blue dot, larger)
 # ax.plot(pts[0,0], pts[0,1], marker='o', color=VARS_COLOR, markersize=8, label='Initial point')
@@ -137,16 +137,16 @@ ax.plot(pts[:,0], pts[:,1], marker='o', linestyle='None', markersize=4, color="#
 # Highlight final point (red star)
 ax.plot(pts[-1,0], pts[-1,1], marker='*', color=VARS_COLOR, markersize=20, label='Optimum')
 
-for i in range(len(pts)-1):
+for i in range(len(pts)-4):
     ax.annotate(
         '',
         xy=tuple(pts[i+1]),
         xytext=tuple(pts[i]),
-        arrowprops=dict(arrowstyle='->', lw=1.2, alpha=1./(i+1), color='red')
+        arrowprops=dict(arrowstyle='->', lw=2, alpha=1., color='cyan')
     )
-    ax.text(pts[i,0]+0.03, pts[i,1]+0.05, f'k={i}', fontdict={'size': 18, 'color': VARS_COLOR, 'alpha': 1./(i+1)})
+    ax.text(pts[i,0]+0.03, pts[i,1]+0.05, f'k={i}', fontdict={'size': 18, 'color': VARS_COLOR, 'alpha': 1.})
 
-ax.text(pts[-1,0]+0.03, pts[-1,1]+0.05, 'Optimum', fontdict={'size': 18, 'color': VARS_COLOR})
+ax.text(pts[-1,0], pts[-1,1]+0.1, 'Optimum', fontdict={'size': 18, 'color': VARS_COLOR})
 
 def draw_quadratic_level(ax, xk, yk, level=1.0):
     g = grad(xk, yk)
@@ -165,10 +165,10 @@ def draw_quadratic_level(ax, xk, yk, level=1.0):
     E = (vecs @ np.diag(axes) @ np.vstack([np.cos(theta), np.sin(theta)])).T
     Ex = E[:,0] + xk
     Ey = E[:,1] + yk
-    ax.plot(Ex, Ey, linewidth=1, color=VARS_COLOR)
+    ax.plot(Ex, Ey, linewidth=2, color=VARS_COLOR)
 
 # choose levels scaled to show different bowls
-levels_q = [0.05, 0.03, 0.02]
+levels_q = [0.2, 0.2, 0.1, 0.05, 0.02, 0.01]
 for (xk, yk), lvl in zip(pts[:-1], levels_q):
     draw_quadratic_level(ax, xk, yk, level=lvl)
 # Cosmetic labels (no specific colors set)
@@ -181,8 +181,10 @@ plt.grid()
 plt.tight_layout()
 
 # Show QP models for first 3 steps
-fig, axs = plt.subplots(1, 5, figsize=(15, 4))
-for k in range(5):
-    plot_qp_step(pts[k], step_id=k, ax=axs[k])
+fig, axs = plt.subplots(2, 2, figsize=(8, 6), constrained_layout=True)
+for k in range(4):
+    row = k // 2
+    col = k % 2
+    plot_qp_step(pts[k], step_id=k, ax=axs[row, col])
 plt.tight_layout()
 plt.show()
