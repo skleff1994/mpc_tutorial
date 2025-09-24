@@ -9,9 +9,120 @@ import crocoddyl
 import mim_solvers
 
 from IPython.display import HTML
-from .pendulum_utils import animatePendulum
+from pendulum_utils import animatePendulum
 
-from .pendulum_utils import DiffActionModelPendulum
+# from pendulum_utils import DiffActionModelPendulum
+
+# class DiffActionModelPendulum(crocoddyl.DifferentialActionModelAbstract):
+#     '''
+#     This class defines a custom Differential Action Model for the simple pendulum
+#     It defines the continuous-time
+#         - dynamics
+#         - cost
+#         - constraint
+#     '''
+#     def __init__(self, isTerminal=False, hasConstraints=False, dt=0.1):
+#         self.dt = dt
+#         self.nq = 1 
+#         self.nv = 1
+#         self.ndx = 2
+#         self.nx = self.nq + self.nv
+#         nu = 1
+#         nr = 4
+#         if(hasConstraints):# and not isTerminal):
+#             ng = 2#1
+#             nh = 0
+#         else: 
+#             ng = 0
+#             nh = 0
+
+#         # Cost function parameters
+#         if(isTerminal):
+#             self.costWeights = [
+#                 0., #1,    # sin(th)
+#                 0., #1,    # 1-cos(th)
+#                 0., #1e-2, # thdot
+#                 1e-3, # f
+#             ]  
+#         else:
+#             self.costWeights = [
+#                 0., #1,    # sin(th)
+#                 0., #1,    # 1-cos(th)
+#                 0., #1e-2, # thdot
+#                 0., #1e-3, # f
+#             ]  
+
+#         # create action model
+#         state = crocoddyl.StateVector(self.nx)
+#         crocoddyl.DifferentialActionModelAbstract.__init__(self, state, nu, nr, ng, nh)
+#         self.unone = np.zeros(self.nu)
+
+#         if hasConstraints:# and not isTerminal:
+#             # u_lim = 5.
+#             # self.g_lb = np.array([-u_lim])
+#             # self.g_ub = np.array([u_lim])
+#             if(isTerminal):
+#                 self.g_lb = np.array([0., 0.])
+#                 self.g_ub = np.array([0., 0.])
+#             else:
+#                 self.g_lb = np.array([0., -1.])
+#                 self.g_ub = np.array([0., 1.])
+
+#         self.g = 9.81
+#         self.L = 1
+
+#         self.isTerminal = isTerminal
+#         self.hasConstraints = hasConstraints
+
+#     def calc(self, data, x, u=None):
+#         if u is None:
+#             u = self.unone
+
+#         s, c = np.sin(x[0]), np.cos(x[0])
+#         if self.isTerminal:
+#             # Computing the cost residual and value
+#             data.r[:] = np.array([s, 1 - c, x[1], u[0]]).T
+#             data.cost = 0.5 * sum(self.costWeights * (np.asarray(data.r) ** 2)).item()
+#             data.xout = np.zeros(self.state.nx)
+#         else:
+#             # Computing the cost residual and value
+#             data.r = np.array([s, 1 - c, x[1], u[0]]).T
+#             data.cost = 0.5 * sum(self.costWeights * (np.asarray(data.r) ** 2)).item()
+#             data.xout = - self.g * np.sin(x[0]) / self.L + u
+
+#         if self.hasConstraints: # and not self.isTerminal:
+#             # data.g[0] = u[0]
+#             data.g = x
+
+#     def calcDiff(self, data, x, u=None):
+#         w = self.costWeights
+#         s, c = np.sin(x[0]), np.cos(x[0])
+#         data.Lx[0] = s * ((w[0] - w[1]) * c + w[1])
+#         data.Lx[1] = w[2] * x[1]
+#         data.Lxx[0, 0] = w[0] * (c**2 - s**2) + w[1] * (s**2 - c**2 + c)
+#         data.Lxx[1, 1] = w[2]
+
+#         if not self.isTerminal:
+#             data.Lu[0] = w[3] * u[0]
+#             data.Luu[0, 0] = w[3]
+
+#             data.Fx[0] = - self.g * np.cos(x[0]) / self.L
+#             data.Fx[1] = 0.
+#             data.Fu[0] = 1.
+            
+#         data.Lxu = np.zeros([2, 1])
+
+#         if self.isTerminal:
+#             data.Lx   = self.dt * data.Lx
+#             data.Lxx =  self.dt * data.Lxx
+
+#         if self.hasConstraints: # and not self.isTerminal:
+#             data.Gx = np.zeros((self.ng, self.nx)) 
+#             data.Gx[0,0] += 1
+#             data.Gx[1,1] += 1
+#             if not self.isTerminal:
+#                 data.Gu = np.zeros((self.ng, self.nu)) 
+#             # data.Gu[0] = 1.
 
 class DiffActionModelPendulum(crocoddyl.DifferentialActionModelAbstract):
     '''
@@ -29,8 +140,8 @@ class DiffActionModelPendulum(crocoddyl.DifferentialActionModelAbstract):
         self.nx = self.nq + self.nv
         nu = 1
         nr = 4
-        if(hasConstraints):# and not isTerminal):
-            ng = 2#1
+        if(hasConstraints and not isTerminal):
+            ng = 1
             nh = 0
         else: 
             ng = 0
@@ -39,17 +150,17 @@ class DiffActionModelPendulum(crocoddyl.DifferentialActionModelAbstract):
         # Cost function parameters
         if(isTerminal):
             self.costWeights = [
-                0., #1,    # sin(th)
-                0., #1,    # 1-cos(th)
-                0., #1e-2, # thdot
-                1e-3, # f
+                10,    # sin(th)
+                10,    # 1-cos(th)
+                10e-2, # thdot
+                0#1e-3, # f
             ]  
         else:
             self.costWeights = [
-                0., #1,    # sin(th)
-                0., #1,    # 1-cos(th)
-                0., #1e-2, # thdot
-                0., #1e-3, # f
+                10,    # sin(th)
+                10,    # 1-cos(th)
+                10e-2, # thdot
+                1e-3, # f
             ]  
 
         # create action model
@@ -57,16 +168,10 @@ class DiffActionModelPendulum(crocoddyl.DifferentialActionModelAbstract):
         crocoddyl.DifferentialActionModelAbstract.__init__(self, state, nu, nr, ng, nh)
         self.unone = np.zeros(self.nu)
 
-        if hasConstraints:# and not isTerminal:
-            # u_lim = 5.
-            # self.g_lb = np.array([-u_lim])
-            # self.g_ub = np.array([u_lim])
-            if(isTerminal):
-                self.g_lb = np.array([0., 0.])
-                self.g_ub = np.array([0., 0.])
-            else:
-                self.g_lb = np.array([0., -1.])
-                self.g_ub = np.array([0., 1.])
+        if hasConstraints and not isTerminal:
+            u_lim = 2.
+            self.g_lb = np.array([- u_lim])
+            self.g_ub = np.array([u_lim])
 
         self.g = 9.81
         self.L = 1
@@ -90,9 +195,8 @@ class DiffActionModelPendulum(crocoddyl.DifferentialActionModelAbstract):
             data.cost = 0.5 * sum(self.costWeights * (np.asarray(data.r) ** 2)).item()
             data.xout = - self.g * np.sin(x[0]) / self.L + u
 
-        if self.hasConstraints: # and not self.isTerminal:
-            # data.g[0] = u[0]
-            data.g = x
+        if self.hasConstraints and not self.isTerminal:
+            data.g[0] = u[0]
 
     def calcDiff(self, data, x, u=None):
         w = self.costWeights
@@ -116,13 +220,10 @@ class DiffActionModelPendulum(crocoddyl.DifferentialActionModelAbstract):
             data.Lx   = self.dt * data.Lx
             data.Lxx =  self.dt * data.Lxx
 
-        if self.hasConstraints: # and not self.isTerminal:
+        if self.hasConstraints and not self.isTerminal:
             data.Gx = np.zeros((self.ng, self.nx)) 
-            data.Gx[0,0] += 1
-            data.Gx[1,1] += 1
-            if not self.isTerminal:
-                data.Gu = np.zeros((self.ng, self.nu)) 
-            # data.Gu[0] = 1.
+            data.Gu[0] = 1.
+
 
 
 if __name__ == "__main__":
@@ -130,16 +231,16 @@ if __name__ == "__main__":
     nx = 2
     nu = 1
     x0 = np.zeros(nx) 
-    x0[0] = -3. #+ 0.01
-    x0[1] = 0. #-3
+    x0[0] = -np.pi+0.1
+    x0[1] = 0.
 
     # Create the running models
     dt = 2e-2
     T = 100
-    running_DAM = DiffActionModelPendulum(isTerminal=False, hasConstraints=True)
+    running_DAM = DiffActionModelPendulum(isTerminal=False, hasConstraints=False)
     running_model = crocoddyl.IntegratedActionModelEuler(running_DAM, dt)
 
-    running_DAM_terminal = DiffActionModelPendulum(isTerminal=True, hasConstraints=True)
+    running_DAM_terminal = DiffActionModelPendulum(isTerminal=True, hasConstraints=False)
     running_model_terminal = crocoddyl.IntegratedActionModelEuler(running_DAM_terminal, 0.)
 
     # Create the shooting problem
@@ -152,7 +253,7 @@ if __name__ == "__main__":
 
     # Define warm start
     xs = [x0] * (T + 1)
-    us = [np.ones(1)] * T
+    us = [np.zeros(1)] * T
 
     # Define solver
     # solver = mim_solvers.SolverCSQP(problem)
@@ -174,9 +275,9 @@ if __name__ == "__main__":
 
     x_traj = np.array(solver.xs)
     u_traj = np.array(solver.us)
-    
+    # print(x_traj)
     # Create animation
-    anim = animatePendulum(solver.xs)
+    anim = animatePendulum(solver.xs, show=True)
 
     import matplotlib.pyplot as plt 
 

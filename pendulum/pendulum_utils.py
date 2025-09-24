@@ -203,7 +203,7 @@ def animatePendulum(xs, sleep=50, show=False, mode="html"):
     def animate(i):
         x_cart = 0.0
         y_cart = 0.0
-        theta = xs[i][1]  # assuming state = [?, theta]
+        theta = xs[i][0]  # assuming state = [?, theta]
         patch.set_xy([x_cart - cart_size / 2, y_cart - cart_size / 2])
         x_pole = np.cumsum([x_cart, -pole_length * np.sin(theta)])
         y_pole = np.cumsum([y_cart, pole_length * np.cos(theta)])
