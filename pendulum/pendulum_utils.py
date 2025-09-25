@@ -36,10 +36,10 @@ class DiffActionModelPendulum(crocoddyl.DifferentialActionModelAbstract):
         # Cost function parameters
         if(isTerminal):
             self.costWeights = [
-                1,    # sin(th)
-                1,    # 1-cos(th)
-                1e-2, # thdot
-                1e-3, # f
+                10,    # sin(th)
+                10,    # 1-cos(th)
+                1e-1, # thdot
+                0., # f
             ]  
         else:
             self.costWeights = [
@@ -64,21 +64,6 @@ class DiffActionModelPendulum(crocoddyl.DifferentialActionModelAbstract):
 
         self.isTerminal = isTerminal
         self.hasConstraints = hasConstraints
-
-    def _running_cost(self, x, u):
-
-
-        cost = self.x_weights[0] * (1 - np.cos(x[0])) # cos(th)
-        cost += self.x_weights[1] * (np.sin(x[0]))    # sin(th)
-        cost += self.x_weights[2] * x[1] ** 2         # thdot
-        cost += self.u_weight * u[0] ** 2             # u
-        return 0.5 * cost
-
-    def _terminal_cost(self, x):
-        cost = self.x_weights[0] * (1 - np.cos(x[0])) # cos(th)
-        cost += self.x_weights[1] * (np.sin(x[0]))    # sin(th)
-        cost + self.x_weights[2] * x[1] ** 2          # thdot
-        return 0.5 * cost 
 
     def calc(self, data, x, u=None):
         if u is None:
