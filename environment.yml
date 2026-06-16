@@ -1,15 +1,19 @@
-name: colab_test
+name: mpc_tutorial
 channels:
   - conda-forge
 dependencies:
-  - python=3.10
+  - python>=3.10,<3.13
   - numpy
   - scipy
   - matplotlib
-  # - crocoddyl
-  # - pinocchio
+  - crocoddyl
+  - pinocchio
   - mim-solvers
   - osqp
   - ipython
   - jupyterlab
   - ffmpeg
+  - pybullet
+  - pip
+  - pip:
+      - --no-deps git+https://github.com/machines-in-motion/mim_robots.git

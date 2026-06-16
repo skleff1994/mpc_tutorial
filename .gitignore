@@ -1,1 +1,9 @@
 *.pyc
+__pycache__/
+*.egg-info/
+.pixi/
+pixi.lock
+.ipynb_checkpoints/
+*.egg
+dist/
+build/

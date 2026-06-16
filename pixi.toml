@@ -1,0 +1,30 @@
+[workspace]
+name = "mpc_tutorial"
+version = "0.1.0"
+description = "Optimal Control and MPC tutorial"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64"]
+
+[dependencies]
+python = ">=3.10,<3.13"
+numpy = "*"
+scipy = "*"
+matplotlib = "*"
+crocoddyl = "*"
+pinocchio = "*"
+mim-solvers = "*"
+osqp = "*"
+ipython = "*"
+jupyterlab = "*"
+ffmpeg = "*"
+pybullet = "*"
+pip = "*"
+
+[tasks]
+setup-deps = "python -c 'import mim_robots' 2>/dev/null || pip install git+https://github.com/machines-in-motion/mim_robots.git --no-deps"
+pendulum-ocp = { cmd = "python pendulum/pendulum_ocp.py", depends-on = ["setup-deps"] }
+pendulum-bellman = { cmd = "python pendulum/pendulum_bellman.py", depends-on = ["setup-deps"] }
+cartpole-ocp = { cmd = "python cartpole/cartpole_ocp.py", depends-on = ["setup-deps"] }
+kuka-ocp = { cmd = "python kuka/ocp_kuka_reaching.py", depends-on = ["setup-deps"] }
+kuka-mpc = { cmd = "python kuka/mpc_kuka_reaching.py", depends-on = ["setup-deps"] }
+lab = { cmd = "jupyter lab notebooks/", depends-on = ["setup-deps"] }
