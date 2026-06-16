@@ -75,9 +75,10 @@ If you prefer traditional Conda/Mamba:
    conda activate mpc_tutorial
    ```
 
-3. **Install the package in editable mode**:
+3. **Install the package and mim_robots**:
    ```bash
    pip install -e . --no-deps
+   pip install git+https://github.com/machines-in-motion/mim_robots.git --no-deps
    ```
 
 4. **Run a script**:

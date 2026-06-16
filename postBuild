@@ -1,2 +1,3 @@
 #!/bin/bash
 pip install -e . --no-deps
+pip install git+https://github.com/machines-in-motion/mim_robots.git --no-deps

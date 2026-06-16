@@ -15,5 +15,3 @@ dependencies:
   - ffmpeg
   - pybullet
   - pip
-  - pip:
-      - --no-deps git+https://github.com/machines-in-motion/mim_robots.git
