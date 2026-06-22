@@ -18,7 +18,7 @@ def rosenbrock_grad(x):
 
 def rosenbrock_hessian(x):
     """Compute the Hessian of the Rosenbrock function."""
-    d2fdx02 = 2 + 4 * B * (x[1] - x[0] ** 2) + 12 * B * x[0]**2
+    d2fdx02 = 2 - 4 * B * (x[1] - x[0] ** 2) + 8 * B * x[0]**2
     d2fdx01 = -4 * B * x[0]
     d2fdx11 = 2 * B
     return np.array([[d2fdx02, d2fdx01], [d2fdx01, d2fdx11]])
@@ -43,7 +43,7 @@ def F_hess(z1, z2):
     '''
     Hessian of the objective function
     '''
-    F_z1z1 = 2 - 4 * z2 + 12 * z1**2
+    F_z1z1 = 2 - 4 * B * z2 + 8 * z1**2
     F_z1z2 = -4 * B * z1
     F_z2z2 = 2 * B
     return np.array([[F_z1z1, F_z1z2],[F_z1z2, F_z2z2]])
