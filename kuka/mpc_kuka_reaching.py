@@ -129,9 +129,9 @@ for i in range(sim_data['N_sim']):
         # Set x0 to measured state 
         solver.problem.x0 = sim_data['state_mea_SIM_RATE'][i, :]
         # Warm start using previous solution
-        xs_init = list(solver.xs[1:]) + [solver.xs[-1]]
+        xs_init = list(np.array(solver.xs)[1:]) + [solver.xs[-1]]
         xs_init[0] = sim_data['state_mea_SIM_RATE'][i, :]
-        us_init = list(solver.us[1:]) + [solver.us[-1]] 
+        us_init = list(np.array(solver.us)[1:]) + [solver.us[-1]] 
         
         # Solve OCP & record MPC predictions
         solver.solve(xs_init, us_init, ocp_params['maxiter'])
@@ -184,4 +184,4 @@ for i in range(sim_data['N_sim']):
 
 plot_data = mpc_utils.extract_plot_data_from_sim_data(sim_data)
 
-mpc_utils.plot_mpc_results(plot_data, which_plots=['x', 'u', 'ee_lin'], PLOT_PREDICTIONS=True, pred_plot_sampling=int(sim_params['mpc_freq']/5))
+mpc_utils.plot_mpc_results(plot_data, which_plots=['x', 'u', 'ee'], PLOT_PREDICTIONS=True, pred_plot_sampling=int(sim_params['mpc_freq']/5))
