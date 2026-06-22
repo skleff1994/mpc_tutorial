@@ -15,13 +15,12 @@ In particular, the following methods are implemented:
 You can run the notebooks directly in your web browser without installing anything locally:
 
 ### 1. Google Colab
-Open the notebooks directly in Google Colab using the badges below. 
+
+Open the notebooks directly in Google Colab using the badges below.
 
 > [!IMPORTANT]
-> Google Colab uses **`condacolab`** to install compiled robotics dependencies. 
-> 1. Run the **first cell** (Conda Setup) in the notebook.
-> 2. The kernel will **automatically restart** (you will see a crash/restart notification — this is expected!).
-> 3. Run the **second cell** to install packages and clone the repository.
+> Google Colab uses **`condacolab`** to install compiled robotics dependencies.
+> Run the setup cell at the top of the notebook. The first time, Colab may automatically restart the runtime after installing Conda. This is expected. After the restart, run the same setup cell again, then continue with the notebook.
 
 * **Intro:** [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/skleff1994/mpc_tutorial/blob/master/notebooks/intro.ipynb)
 * **Part 1 (Optimal Control):** [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/skleff1994/mpc_tutorial/blob/master/notebooks/part1.ipynb)
@@ -113,3 +112,17 @@ The main dependencies installed automatically by the setup tools are:
 * [mim_robots](https://github.com/machines-in-motion/mim_robots) (Robot descriptions and wrappers)
 * `pybullet`, `osqp`, `numpy`, `scipy`, `matplotlib`, `jupyterlab`
 
+## Acknowledgements and References
+
+Some KUKA examples in this repository are freely adapted from my companion repository [`minimal_examples_crocoddyl`](https://github.com/skleff1994/minimal_examples_crocoddyl), which provides compact examples for using Crocoddyl.
+
+This tutorial is also inspired by standard references in numerical optimization and numerical optimal control, in particular:
+
+- S. Gros and M. Diehl, *Numerical Optimal Control*, 2022.  
+  https://www.syscop.de/files/2020ss/NOC/book-NOCSE.pdf
+
+- J. Nocedal and S. J. Wright, *Numerical Optimization*, Springer.  
+  https://www.ime.unicamp.br/~pulino/MT404/TextosOnline/NocedalJ.pdf
+
+- A. Jordana, S. Kleff, A. Meduri, J. Carpentier, N. Mansard, and L. Righetti, *Structure-Exploiting Sequential Quadratic Programming for Model-Predictive Control*.  
+  https://laas.hal.science/hal-04330251
