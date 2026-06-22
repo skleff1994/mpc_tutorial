@@ -13,7 +13,7 @@ dependencies:
   - nbclient
 
   # Scientific Python
-  - numpy
+  - numpy<2
   - scipy
   - matplotlib
   - osqp

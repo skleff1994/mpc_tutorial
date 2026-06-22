@@ -99,7 +99,8 @@ conda create -n mpc_tutorial -c conda-forge --override-channels \
   coal-python=3.0.1 \
   libcoal=3.0.1 \
   ipython \
-  matplotlib 
+  matplotlib \
+  numpy<2.0.0
 ```
 
 ---

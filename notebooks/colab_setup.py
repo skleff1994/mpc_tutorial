@@ -29,7 +29,7 @@ REPO_NAME = "mpc_tutorial"
 
 CONDA_PACKAGES = [
     "matplotlib",
-    "numpy",
+    "numpy<2",
     "scipy",
     "osqp",
     "pybullet",
