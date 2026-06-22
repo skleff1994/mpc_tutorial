@@ -67,7 +67,7 @@ If you prefer traditional Conda/Mamba:
 
 1. **Create the environment**:
    ```bash
-   conda env create -f environment.yml
+   conda env create -f environment.yaml
    ```
 
 2. **Activate the environment**:
@@ -77,7 +77,6 @@ If you prefer traditional Conda/Mamba:
 
 3. **Install the package and mim_robots**:
    ```bash
-   pip install -e . --no-deps
    pip install git+https://github.com/machines-in-motion/mim_robots.git --no-deps
    ```
 
@@ -85,6 +84,23 @@ If you prefer traditional Conda/Mamba:
    ```bash
    python pendulum/pendulum_ocp.py
    ```
+
+#### Create the conda environment manually
+The conda environment was created using the following command:
+```bash
+conda create -n mpc_tutorial -c conda-forge --override-channels \
+  python=3.12 pip matplotlib \
+  mim-solvers=0.2.0 \
+  crocoddyl=3.2.0 \
+  pinocchio=3.8.0 \
+  pinocchio-python=3.8.0 \
+  libpinocchio=3.8.0 \
+  coal=3.0.1 \
+  coal-python=3.0.1 \
+  libcoal=3.0.1 \
+  ipython \
+  matplotlib 
+```
 
 ---
 
